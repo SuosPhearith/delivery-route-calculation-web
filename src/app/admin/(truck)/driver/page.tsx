@@ -1,9 +1,10 @@
-import TruckComponent from "@/components/resources/admin/truck/TruckComponent";
+import DriverComponent from "@/components/resources/admin/driver/DriverComponent";
 import React from "react";
+
 const page = () => {
   return (
     <main>
-      <TruckComponent />
+      <DriverComponent />
     </main>
   );
 };

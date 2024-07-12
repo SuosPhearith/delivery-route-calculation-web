@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import Image from "next/image";
 import SidebarItem from "@/components/Sidebar/SidebarItem";
 import ClickOutside from "@/components/ClickOutside";
@@ -57,6 +56,7 @@ const menuGroups = [
         children: [
           { label: "Driver", route: "/admin/driver" },
           { label: "Assistant", route: "/admin/assistant" },
+          { label: "License", route: "/admin/license" },
         ],
       },
       {
@@ -97,7 +97,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
       >
         {/* <!-- SIDEBAR HEADER --> */}
         <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5 xl:py-10">
-          <Link href="/">
+          <div>
             <Image
               width={176}
               height={32}
@@ -116,7 +116,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
               className="hidden dark:block"
               style={{ width: "auto", height: "auto" }}
             />
-          </Link>
+          </div>
 
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
