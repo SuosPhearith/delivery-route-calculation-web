@@ -15,6 +15,7 @@ type Inputs = {
 const SignIn = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [userAgent, setUserAgent] = useState("");
+  const route = useRouter();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -31,7 +32,7 @@ const SignIn = () => {
       const responseData = await apiRequest("post", `/auth/signIn`, data);
       const roleId = responseData.user.roleId;
       if (roleId === Roles.admin) {
-        window.location.href = "/admin";
+        route.push("/admin");
       }
       return responseData;
     } catch (message: any) {

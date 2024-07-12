@@ -1,10 +1,10 @@
+import SizeComponent from "@/components/resources/admin/SizeComponent";
 import React from "react";
-import FuelComponent from "../../../components/resources/admin/FuelComponent";
 
 const page = () => {
   return (
     <main>
-      <FuelComponent />
+      <SizeComponent />
     </main>
   );
 };

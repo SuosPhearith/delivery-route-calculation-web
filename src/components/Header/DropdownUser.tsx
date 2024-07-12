@@ -1,18 +1,21 @@
+"use client";
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import ClickOutside from "@/components/ClickOutside";
 import apiRequest from "@/services/apiRequest";
+import { useRouter } from "next/navigation";
 
 const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const route = useRouter();
 
   const logout = async () => {
     try {
       await apiRequest("DELETE", "/auth/logout");
-      window.location.href = "/auth/signin";
+      route.push("/auth/signin");
     } catch (errorMessage: any) {
-      window.location.href = "/auth/signin";
+      route.push("/auth/signin");
     }
   };
 
@@ -153,7 +156,7 @@ const DropdownUser = () => {
           <div className="p-2.5">
             <div
               onClick={logout}
-              className="flex w-full items-center gap-2.5 rounded-[7px] p-2.5 text-sm font-medium text-dark-4 duration-300 ease-in-out hover:bg-gray-2 hover:text-dark dark:text-dark-6 dark:hover:bg-dark-3 dark:hover:text-white lg:text-base"
+              className="flex w-full cursor-pointer items-center gap-2.5 rounded-[7px] p-2.5 text-sm font-medium text-dark-4 duration-300 ease-in-out hover:bg-gray-2 hover:text-dark dark:text-dark-6 dark:hover:bg-dark-3 dark:hover:text-white lg:text-base"
             >
               <svg
                 className="fill-current"
