@@ -109,16 +109,16 @@ const TruckComponent = () => {
       </div>
       <div className="mt-3 md:flex md:items-center md:justify-between">
         <div className="inline-flex divide-x overflow-hidden rounded-lg border bg-white dark:divide-gray-700 dark:border-gray-700 dark:bg-gray-900 rtl:flex-row-reverse">
-          <button className="bg-gray-100 px-5 py-2 text-xs font-medium text-gray-600 transition-colors duration-200 dark:bg-gray-800 dark:text-gray-300 sm:text-sm">
+          <button className="bg-gray-100 px-5 py-2 text-xs font-medium text-black transition-colors duration-200 dark:bg-gray-800 dark:text-gray-300 sm:text-sm">
             View all
           </button>
-          <button className="px-5 py-2 text-xs font-medium text-gray-600 transition-colors duration-200 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 sm:text-sm">
+          <button className="px-5 py-2 text-xs font-medium text-black transition-colors duration-200 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 sm:text-sm">
             Active
           </button>
-          <button className="px-5 py-2 text-xs font-medium text-gray-600 transition-colors duration-200 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 sm:text-sm">
+          <button className="px-5 py-2 text-xs font-medium text-black transition-colors duration-200 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 sm:text-sm">
             Pending
           </button>
-          <button className="px-5 py-2 text-xs font-medium text-gray-600 transition-colors duration-200 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 sm:text-sm">
+          <button className="px-5 py-2 text-xs font-medium text-black transition-colors duration-200 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 sm:text-sm">
             Fail
           </button>
         </div>

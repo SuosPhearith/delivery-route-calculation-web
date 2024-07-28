@@ -5,16 +5,13 @@ import Image from "next/image";
 import SidebarItem from "@/components/Sidebar/SidebarItem";
 import ClickOutside from "@/components/ClickOutside";
 import useLocalStorage from "@/hooks/useLocalStorage";
-import {
-  BsGrid,
-  BsTruck,
-  BsPerson,
-  BsPersonGear,
-  BsGear,
-} from "react-icons/bs";
+import { BsGrid, BsTruck, BsGear } from "react-icons/bs";
 import { VscAccount } from "react-icons/vsc";
-import { FaRoute } from "react-icons/fa6";
+import { FiMapPin } from "react-icons/fi";
 import { BsBoxSeam } from "react-icons/bs";
+import { FiUsers } from "react-icons/fi";
+import { GiSteeringWheel } from "react-icons/gi";
+import { LiaWarehouseSolid } from "react-icons/lia";
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -30,7 +27,7 @@ const menuGroups = [
         route: "/admin",
       },
       {
-        icon: <FaRoute size={20} />,
+        icon: <FiMapPin size={20} />,
         label: "Route",
         route: "/admin/route",
       },
@@ -45,12 +42,17 @@ const menuGroups = [
         ],
       },
       {
+        icon: <LiaWarehouseSolid size={20} />,
+        label: "Warehouse",
+        route: "/admin/warehouse",
+      },
+      {
         icon: <BsBoxSeam size={20} />,
         label: "Case",
         route: "/admin/case",
       },
       {
-        icon: <BsPerson size={20} />,
+        icon: <GiSteeringWheel size={20} />,
         label: "Driver",
         route: "#",
         children: [
@@ -60,7 +62,7 @@ const menuGroups = [
         ],
       },
       {
-        icon: <BsPersonGear size={20} />,
+        icon: <FiUsers size={20} />,
         label: "User",
         route: "/admin/user",
       },
@@ -98,24 +100,28 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
         {/* <!-- SIDEBAR HEADER --> */}
         <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5 xl:py-10">
           <div>
-            <Image
-              width={176}
-              height={32}
-              src={"/images/logo/logo-dark.svg"}
-              alt="Logo"
-              priority
-              className="dark:hidden"
-              style={{ width: "auto", height: "auto" }}
-            />
-            <Image
-              width={176}
-              height={32}
-              src={"/images/logo/logo.svg"}
-              alt="Logo"
-              priority
-              className="hidden dark:block"
-              style={{ width: "auto", height: "auto" }}
-            />
+            <div className="flex dark:hidden">
+              <Image
+                width={176}
+                height={32}
+                src={"/images/logo/logo-icon.svg"}
+                alt="Logo"
+                priority
+                style={{ width: "auto", height: "auto" }}
+              />
+              <div className="ms-3 text-3xl font-bold text-blue-950">D.R.C</div>
+            </div>
+            <div className="hidden dark:flex">
+              <Image
+                width={176}
+                height={32}
+                src={"/images/logo/logo-icon.svg"}
+                alt="Logo"
+                priority
+                style={{ width: "auto", height: "auto" }}
+              />
+              <div className="ms-3 text-3xl font-bold text-white">D.R.C</div>
+            </div>
           </div>
 
           <button

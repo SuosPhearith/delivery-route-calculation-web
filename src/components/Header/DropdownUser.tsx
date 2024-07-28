@@ -3,20 +3,15 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import ClickOutside from "@/components/ClickOutside";
-import apiRequest from "@/services/apiRequest";
 import { useRouter } from "next/navigation";
+import logoutAPI from "@/services/logout";
 
 const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const route = useRouter();
 
   const logout = async () => {
-    try {
-      await apiRequest("DELETE", "/auth/logout");
-      route.push("/auth/signin");
-    } catch (errorMessage: any) {
-      route.push("/auth/signin");
-    }
+    await logoutAPI();
   };
 
   return (

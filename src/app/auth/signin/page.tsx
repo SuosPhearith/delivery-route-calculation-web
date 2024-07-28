@@ -4,8 +4,11 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { FaInfoCircle } from "react-icons/fa";
 import { TbLogin } from "react-icons/tb";
 import { useRouter } from "next/navigation";
+import { message } from "antd";
+import axios from "axios";
+import saveToken, { getAccessToken } from "@/services/saveToken";
 import Roles from "@/utils/Roles.enum";
-import apiRequest from "@/services/apiRequest";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 type Inputs = {
   email: string;
@@ -14,29 +17,25 @@ type Inputs = {
 
 const SignIn = () => {
   const [errorMessage, setErrorMessage] = useState("");
-  const [userAgent, setUserAgent] = useState("");
   const route = useRouter();
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setUserAgent(navigator.userAgent);
-    }
-  }, []);
-
-  const signIn = async (data: {
-    email: string;
-    password: string;
-    userAgent: string;
-  }) => {
+  const signIn = async (data: { email: string; password: string }) => {
     try {
-      const responseData = await apiRequest("post", `/auth/signIn`, data);
-      const roleId = responseData.user.roleId;
-      if (roleId === Roles.admin) {
+      const response = await axios.post(`${baseUrl}/keycloak/auth/signin`, {
+        email: data.email,
+        password: data.password,
+      });
+      const responseData: LoginResponse = response.data;
+      saveToken(
+        responseData.access_token,
+        responseData.refresh_token,
+        responseData.role,
+      );
+      if (responseData.role === Roles.ADMIN) {
         route.push("/admin");
       }
-      return responseData;
-    } catch (message: any) {
-      setErrorMessage(message);
+    } catch (error: any) {
+      setErrorMessage(error.response.data.message);
     }
   };
 
@@ -47,7 +46,7 @@ const SignIn = () => {
   } = useForm<Inputs>();
 
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    await signIn({ ...data, userAgent });
+    await signIn({ ...data });
   };
 
   return (
@@ -113,3 +112,9 @@ const SignIn = () => {
 };
 
 export default SignIn;
+
+type LoginResponse = {
+  access_token: string;
+  refresh_token: string;
+  role: string;
+};

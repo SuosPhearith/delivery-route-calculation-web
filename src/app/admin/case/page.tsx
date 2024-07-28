@@ -1,5 +1,5 @@
+import CaseComponent from "@/components/resources/admin/case/CaseComponent";
 import React from "react";
-import CaseComponent from "../../../components/resources/admin/CaseComponent";
 
 const page = () => {
   return (
