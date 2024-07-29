@@ -1,4 +1,4 @@
-import FuelComponent from "@/components/resources/admin/FuelComponent";
+import FuelComponent from "@/components/resources/admin/fuel/FuelComponent";
 import React from "react";
 
 const page = () => {

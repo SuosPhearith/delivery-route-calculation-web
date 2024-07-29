@@ -1,12 +1,9 @@
 import apiRequest from "@/services/apiRequest";
 
-export interface Size {
+export interface OwnerShip {
   id?: number;
   name: string;
-  containerLenght: number;
-  containerWidth: number;
-  containerHeight: number;
-  containerCubic?: number;
+  description: string;
   _count?: TotalTrucks;
 }
 
@@ -15,21 +12,21 @@ export interface TotalTrucks {
 }
 
 export interface ResponseAll {
-  data: Size[];
+  data: OwnerShip[];
   totalCount: number;
   totalPages: number;
   page: number;
   limit: number;
 }
 
-export const getAllSize = async (
+export const getAllOwnerShip = async (
   page: number,
   limit: number,
 ): Promise<ResponseAll> => {
   try {
     const res = await apiRequest(
       "GET",
-      `/truck-size?page=${page}&limit=${limit}`,
+      `/truck-ownership-type?page=${page}&limit=${limit}`,
     );
     return res;
   } catch (error) {
@@ -38,32 +35,30 @@ export const getAllSize = async (
   }
 };
 
-export const createSize = async (data: Size) => {
+export const createOwnerShip = async (data: OwnerShip) => {
   try {
-    const res = await apiRequest("POST", "/truck-size", data);
+    const res = await apiRequest("POST", "/truck-ownership-type", data);
     return res;
   } catch (error) {
     throw error;
   }
 };
 
-export const deleteSize = async (id: number) => {
+export const deleteOwnerShip = async (id: number) => {
   try {
-    const res = await apiRequest("DELETE", `/truck-size/${id}`);
+    const res = await apiRequest("DELETE", `/truck-ownership-type/${id}`);
     return res;
   } catch (error) {
     throw error;
   }
 };
 
-export const updateSize = async (data: Size) => {
+export const updateOwnerShip = async (data: OwnerShip) => {
   try {
-    const { name, containerHeight, containerLenght, containerWidth } = data;
-    const res = await apiRequest("PATCH", `/truck-size/${data.id}`, {
+    const { name, description } = data;
+    const res = await apiRequest("PATCH", `/truck-ownership-type/${data.id}`, {
       name,
-      containerLenght,
-      containerWidth,
-      containerHeight,
+      description,
     });
     return res;
   } catch (error) {

@@ -6,18 +6,18 @@ import React, { useEffect, useState } from "react";
 import { LuArrowLeft, LuArrowRight, LuPlusCircle } from "react-icons/lu";
 import { message, Modal, notification, Popconfirm } from "antd";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { FaRegTrashCan } from "react-icons/fa6";
+import { FaRegEye, FaRegTrashCan } from "react-icons/fa6";
 import { FaRegEdit } from "react-icons/fa";
 import Skeleton from "../../components/Skeleton";
-import {
-  createSize,
-  deleteSize,
-  getAllSize,
-  ResponseAll,
-  Size,
-  updateSize,
-} from "@/api/size";
 import { BsTruck } from "react-icons/bs";
+import {
+  createFuel,
+  deleteFuel,
+  Fuel,
+  getAllFuel,
+  ResponseAll,
+  updateFuel,
+} from "@/api/fuel";
 
 const SizeComponent = () => {
   const router = useRouter();
@@ -60,23 +60,21 @@ const SizeComponent = () => {
 
   // create or update
   const [updateId, setUpdateId] = useState<number>();
-  const handleEdit = (item: Size) => {
+  const handleEdit = (item: Fuel) => {
     reset();
     setValue("name", item.name);
-    setValue("containerHeight", item.containerHeight);
-    setValue("containerWidth", item.containerWidth);
-    setValue("containerLenght", item.containerLenght);
+    setValue("description", item.description);
     showModal();
     setUpdateId(item.id);
   };
 
   const { mutateAsync: updateMutate, isPending: isPendingUpdate } = useMutation(
     {
-      mutationFn: updateSize,
+      mutationFn: updateFuel,
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["sizes"] });
-        // message.success("Container updated successfully");
-        openNotification("Update Container", "Container Updated successfully");
+        queryClient.invalidateQueries({ queryKey: ["ownershipTypes"] });
+        // message.success("Fuel updated successfully");
+        openNotification("Update Fuel", "Fuel Updated successfully");
         handleCancel();
       },
       onError: (error: any) => {
@@ -86,36 +84,26 @@ const SizeComponent = () => {
   );
 
   const { mutateAsync, isPending } = useMutation({
-    mutationFn: createSize,
+    mutationFn: createFuel,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sizes"] });
-      // message.success("Container created successfully");
-      openNotification("Create Container", "Container created successfully");
+      queryClient.invalidateQueries({ queryKey: ["ownershipTypes"] });
+      // message.success("Fuel created successfully");
+      openNotification("Create Fuel", "Fuel created successfully");
       handleCancel();
     },
     onError: (error: any) => {
       message.error(error);
     },
   });
-  const onSubmit: SubmitHandler<Size> = async (data) => {
+  const onSubmit: SubmitHandler<Fuel> = async (data) => {
+    const containerData: Fuel = {
+      id: updateId,
+      name: data.name,
+      description: data.description,
+    };
     if (updateId) {
-      const containerData: Size = {
-        id: updateId,
-        name: data.name,
-        containerLenght: data.containerLenght,
-        containerWidth: data.containerWidth,
-        containerHeight: data.containerHeight,
-      };
-
       await updateMutate(containerData);
     } else {
-      const containerData: Size = {
-        name: data.name,
-        containerLenght: data.containerLenght,
-        containerWidth: data.containerWidth,
-        containerHeight: data.containerHeight,
-      };
-
       await mutateAsync(containerData);
     }
   };
@@ -126,18 +114,18 @@ const SizeComponent = () => {
     reset,
     formState: { errors },
     setValue,
-  } = useForm<Size>();
+  } = useForm<Fuel>();
 
   // end create or update
 
   // delete
   const { mutateAsync: deleteMutate, isPending: isPendingDelete } = useMutation(
     {
-      mutationFn: deleteSize,
+      mutationFn: deleteFuel,
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["sizes"] });
-        // message.success("Size deleted successfully");
-        openNotification("Delete Size", "Size Deleted successfully");
+        queryClient.invalidateQueries({ queryKey: ["ownershipTypes"] });
+        // message.success("Fuel deleted successfully");
+        openNotification("Delete Fuel", "Fuel Deleted successfully");
       },
       onError: (error: any) => {
         message.error(error);
@@ -151,8 +139,8 @@ const SizeComponent = () => {
 
   //fectch
   const { data, isLoading, isError } = useQuery<ResponseAll>({
-    queryKey: ["sizes", page, limit],
-    queryFn: () => getAllSize(page, limit),
+    queryKey: ["ownershipTypes", page, limit],
+    queryFn: () => getAllFuel(page, limit),
   });
 
   useEffect(() => {
@@ -183,10 +171,10 @@ const SizeComponent = () => {
         <div>
           <div className="flex items-center gap-x-3">
             <h2 className="text-lg font-medium text-gray-800 dark:text-white">
-              Size
+              Fuel
             </h2>
             <span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600 dark:bg-gray-800 dark:text-blue-400">
-              {data?.totalCount} Sizes
+              {data?.totalCount} Fuels
             </span>
           </div>
         </div>
@@ -196,7 +184,7 @@ const SizeComponent = () => {
             className="flex shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary px-5 py-2 text-sm tracking-wide text-white transition-colors duration-200 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500"
           >
             <LuPlusCircle size={20} />
-            <span>Add Size</span>
+            <span>Add Fuel</span>
           </button>
         </div>
       </div>
@@ -219,37 +207,19 @@ const SizeComponent = () => {
                       scope="col"
                       className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
                     >
-                      Container Name
+                      Name
                     </th>
                     <th
                       scope="col"
                       className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
                     >
-                      Container length
+                      Description
                     </th>
                     <th
                       scope="col"
                       className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
                     >
-                      Container width
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Container height
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Container cubic
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Total Truck
+                      Total Trucks
                     </th>
                     <th
                       scope="col"
@@ -275,34 +245,27 @@ const SizeComponent = () => {
                           {item.name}
                         </h4>
                       </td>
+
                       <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.containerLenght} m
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.containerWidth} m
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.containerHeight} m
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.containerCubic} m³
+                        <h4 className="... w-[300px] truncate text-black dark:text-gray-200">
+                          {item.description}
                         </h4>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm">
                         <h4 className="flex items-center text-black dark:text-gray-200">
-                          <span className="me-2">{item._count?.Truck}</span>{" "}
+                          <span className="me-2">{item?._count?.Truck}</span>
                           <BsTruck />
                         </h4>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm">
                         <h4 className="flex text-black dark:text-gray-200">
+                          <Link href={`/admin/truck?query=${item?.name}`}>
+                            <FaRegEye
+                              size={18}
+                              className="mx-1 cursor-pointer"
+                              title="See detail"
+                            />
+                          </Link>
                           <FaRegEdit
                             size={18}
                             color="blue"
@@ -315,7 +278,7 @@ const SizeComponent = () => {
                             description="Are you sure to delete?"
                             okText="Yes"
                             cancelText="No"
-                            onConfirm={() => handleDelete(item?.id || 0)}
+                            onConfirm={() => handleDelete(item.id || 0)}
                           >
                             <FaRegTrashCan
                               size={18}
@@ -396,47 +359,20 @@ const SizeComponent = () => {
             </span>
           )}
           <div className="mt-2 text-slate-600">
-            Container length<span className="text-red">*</span>
+            Description<span className="text-red">*</span>
           </div>
           <input
-            {...register("containerLenght", { required: true })}
-            type="number"
-            placeholder="Container length"
+            {...register("description", { required: true })}
+            type="text"
+            placeholder="Description"
             className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 "
           />
-          {errors.containerLenght && (
+          {errors.description && (
             <span className="text-sm text-red-800">
-              Please input valid container lenght.
+              Please input description.
             </span>
           )}
-          <div className="mt-2 text-slate-600">
-            Container width<span className="text-red">*</span>
-          </div>
-          <input
-            {...register("containerWidth", { required: true })}
-            type="number"
-            placeholder="Container width"
-            className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 "
-          />
-          {errors.containerWidth && (
-            <span className="text-sm text-red-800">
-              Please input valid container width.
-            </span>
-          )}
-          <div className="mt-2 text-slate-600">
-            Container height<span className="text-red">*</span>
-          </div>
-          <input
-            {...register("containerHeight", { required: true })}
-            type="number"
-            placeholder="Container height"
-            className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 "
-          />
-          {errors.containerHeight && (
-            <span className="text-sm text-red-800">
-              Please input valid container height.
-            </span>
-          )}
+
           <div className="flex w-full items-center justify-end">
             <div
               onClick={handleCancel}

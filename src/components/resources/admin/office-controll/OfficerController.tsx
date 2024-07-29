@@ -23,6 +23,7 @@ import {
   ResponseAll,
   updateOfficerControll,
 } from "@/api/officerControll";
+import { RiMapPinLine } from "react-icons/ri";
 
 const OfficerController = () => {
   const router = useRouter();
@@ -52,6 +53,7 @@ const OfficerController = () => {
   // create or update
   const [updateId, setUpdateId] = useState<number>();
   const handleEdit = (item: OfficerControll) => {
+    reset();
     setValue("description", item.description);
     showModal();
     setUpdateId(item.id);
@@ -258,13 +260,13 @@ const OfficerController = () => {
                       scope="col"
                       className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
                     >
-                      Zones Controll
+                      Description
                     </th>
                     <th
                       scope="col"
                       className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
                     >
-                      Description
+                      Zones Controll
                     </th>
                     <th
                       scope="col"
@@ -290,14 +292,16 @@ const OfficerController = () => {
                           {item.name}
                         </h4>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.Zone?.length}
-                        </h4>
-                      </td>
+
                       <td className="whitespace-nowrap px-4 py-3 text-sm">
                         <h4 className="... w-[300px] truncate text-black dark:text-gray-200">
                           {item.description}
+                        </h4>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-sm">
+                        <h4 className="flex items-center text-black dark:text-gray-200">
+                          <span className="me-2">{item.Zone?.length}</span>
+                          <RiMapPinLine />
                         </h4>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm">
@@ -305,7 +309,6 @@ const OfficerController = () => {
                           <Link href={`/admin/zone?query=${item?.name}`}>
                             <FaRegEye
                               size={18}
-                              color="gray"
                               className="mx-1 cursor-pointer"
                               title="See detail"
                             />

@@ -51,15 +51,16 @@ const CaseComponent = () => {
   };
 
   const handleCancel = () => {
-    reset();
     setUpdateId(NaN);
     setIsModalOpen(false);
+    reset();
   };
   // end modal
 
   // create or update
   const [updateId, setUpdateId] = useState<number>();
   const handleEdit = (item: Case) => {
+    reset();
     setValue("name", item.name);
     setValue("caseHeight", item.caseHeight);
     setValue("caseWidth", item.caseWidth);
@@ -96,24 +97,17 @@ const CaseComponent = () => {
     },
   });
   const onSubmit: SubmitHandler<Case> = async (data) => {
-    if (updateId) {
-      const caseData: Case = {
-        id: updateId,
-        name: data.name,
-        caseLenght: data.caseLenght,
-        caseWidth: data.caseWidth,
-        caseHeight: data.caseHeight,
-      };
+    const caseData: Case = {
+      name: data.name,
+      caseLenght: data.caseLenght,
+      caseWidth: data.caseWidth,
+      caseHeight: data.caseHeight,
+    };
 
+    if (updateId) {
+      caseData.id = updateId;
       await updateMutate(caseData);
     } else {
-      const caseData: Case = {
-        name: data.name,
-        caseLenght: data.caseLenght,
-        caseWidth: data.caseWidth,
-        caseHeight: data.caseHeight,
-      };
-
       await mutateAsync(caseData);
     }
   };
@@ -374,7 +368,7 @@ const CaseComponent = () => {
             {...register("name", { required: true })}
             type="text"
             placeholder="Name"
-            className=" w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 "
+            className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 "
           />
           {errors.name && (
             <span className="text-sm text-red-800">

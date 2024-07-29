@@ -40,6 +40,7 @@ const menuGroups = [
           { label: "Truck", route: "/admin/truck" },
           { label: "Fuel", route: "/admin/fuel" },
           { label: "Size", route: "/admin/size" },
+          { label: "Ownership", route: "/admin/ownership" },
         ],
       },
       {

@@ -50,6 +50,7 @@ const WarehouseComponent = () => {
   // create or update
   const [updateId, setUpdateId] = useState<number>();
   const handleEdit = (item: Warehouse) => {
+    reset();
     setValue("name", item.name);
     setValue("lat", item.lat);
     setValue("long", item.long);

@@ -52,6 +52,7 @@ const ZoneComponent = () => {
   // create or update
   const [updateId, setUpdateId] = useState<number>();
   const handleEdit = (item: Zone) => {
+    reset();
     setValue("name", item.name);
     setValue("description", item.description);
     setValue("officerControllId", item.officerControllId);
