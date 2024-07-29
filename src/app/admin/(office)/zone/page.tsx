@@ -1,10 +1,10 @@
-import SizeComponent from "@/components/resources/admin/size/SizeComponent";
+import ZoneComponent from "@/components/resources/admin/zone/ZoneComponent";
 import React from "react";
 
 const page = () => {
   return (
     <main>
-      <SizeComponent />
+      <ZoneComponent />
     </main>
   );
 };

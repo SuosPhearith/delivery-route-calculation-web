@@ -12,6 +12,7 @@ import { BsBoxSeam } from "react-icons/bs";
 import { FiUsers } from "react-icons/fi";
 import { GiSteeringWheel } from "react-icons/gi";
 import { LiaWarehouseSolid } from "react-icons/lia";
+import { PiBuildingOffice } from "react-icons/pi";
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -47,6 +48,15 @@ const menuGroups = [
         route: "/admin/warehouse",
       },
       {
+        icon: <PiBuildingOffice size={20} />,
+        label: "Office",
+        route: "#",
+        children: [
+          { label: "Controll", route: "/admin/controll" },
+          { label: "Zone", route: "/admin/zone" },
+        ],
+      },
+      {
         icon: <BsBoxSeam size={20} />,
         label: "Case",
         route: "/admin/case",
@@ -61,26 +71,26 @@ const menuGroups = [
           { label: "License", route: "/admin/license" },
         ],
       },
-      {
-        icon: <FiUsers size={20} />,
-        label: "User",
-        route: "/admin/user",
-      },
+      // {
+      //   icon: <FiUsers size={20} />,
+      //   label: "User",
+      //   route: "/admin/user",
+      // },
       {
         icon: <BsGear size={20} />,
         label: "System",
         route: "/admin/system",
       },
-      {
-        icon: <VscAccount size={20} />,
-        label: "Profile",
-        route: "#",
-        children: [
-          { label: "Information", route: "/admin/profile/information" },
-          { label: "Setting", route: "/admin/profile/setting" },
-          { label: "Session", route: "/admin/profile/session" },
-        ],
-      },
+      // {
+      //   icon: <VscAccount size={20} />,
+      //   label: "Profile",
+      //   route: "#",
+      //   children: [
+      //     { label: "Information", route: "/admin/profile/information" },
+      //     { label: "Setting", route: "/admin/profile/setting" },
+      //     { label: "Session", route: "/admin/profile/session" },
+      //   ],
+      // },
     ],
   },
 ];

@@ -1,21 +1,12 @@
 import apiRequest from "@/services/apiRequest";
-import { errorResponse } from "@/types/error";
 
-interface Case {
-  id: number;
+export interface Case {
+  id?: number;
   name: string;
   caseLenght: number;
-  caseWeight: number;
+  caseWidth: number;
   caseHeight: number;
-  caseCubic: number;
-}
-
-export interface CaseResponse {
-  data: Case[];
-  totalCount: number;
-  totalPages: number;
-  page: number;
-  limit: number;
+  caseCubic?: number;
 }
 
 export interface ResponseAll {
@@ -29,7 +20,7 @@ export interface ResponseAll {
 export const getAllCase = async (
   page: number,
   limit: number,
-): Promise<CaseResponse> => {
+): Promise<ResponseAll> => {
   try {
     const res = await apiRequest("GET", `/case?page=${page}&limit=${limit}`);
     return res;
@@ -39,15 +30,7 @@ export const getAllCase = async (
   }
 };
 
-export interface CreateCaseInterface {
-  id?: number;
-  name: string;
-  caseLenght: number;
-  caseWeight: number;
-  caseHeight: number;
-}
-
-export const createCase = async (data: CreateCaseInterface) => {
+export const createCase = async (data: Case) => {
   try {
     const res = await apiRequest("POST", "/case", data);
     return res;
@@ -65,13 +48,13 @@ export const deleteCase = async (id: number) => {
   }
 };
 
-export const updateCase = async (data: CreateCaseInterface) => {
+export const updateCase = async (data: Case) => {
   try {
-    const { name, caseHeight, caseLenght, caseWeight } = data;
+    const { name, caseHeight, caseLenght, caseWidth } = data;
     const res = await apiRequest("PATCH", `/case/${data.id}`, {
       name,
       caseLenght,
-      caseWeight,
+      caseWidth,
       caseHeight,
     });
     return res;

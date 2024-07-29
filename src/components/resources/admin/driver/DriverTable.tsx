@@ -1,4 +1,4 @@
-import { ResponseAll } from "@/queries/driver";
+import { ResponseAll } from "@/api/driver";
 import React from "react";
 
 const DriverTable: React.FC<ResponseAll> = ({ data }) => {

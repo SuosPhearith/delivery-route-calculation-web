@@ -7,8 +7,8 @@ import {
   ResponseAll,
   updateWarehouse,
   Warehouse,
-} from "@/queries/warehouse";
-import { message, Modal, Popconfirm } from "antd";
+} from "@/api/warehouse";
+import { message, Modal, notification, Popconfirm } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { FaRegEdit } from "react-icons/fa";
@@ -18,7 +18,6 @@ import {
   LuArrowRight,
   LuPlusCircle,
   LuSearch,
-  LuUploadCloud,
 } from "react-icons/lu";
 import Skeleton from "../../components/Skeleton";
 import Link from "next/link";
@@ -34,6 +33,19 @@ const WarehouseComponent = () => {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const queryClient = useQueryClient();
+  const [api, contextHolder] = notification.useNotification();
+
+  const openNotification = (
+    message: string = "Default",
+    description: string = "Successfully",
+  ) => {
+    api.success({
+      message,
+      description,
+      duration: 3,
+      placement: "bottomLeft",
+    });
+  };
 
   // create or update
   const [updateId, setUpdateId] = useState<number>();
@@ -50,7 +62,8 @@ const WarehouseComponent = () => {
       mutationFn: createWarehouse,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["warehouses"] });
-        message.success("Case created successfully");
+        // message.success("Warehouse created successfully");
+        openNotification("Create Warehouse", "Warehouse Created successfully");
         handleCancel();
       },
       onError: (error: any) => {
@@ -62,7 +75,8 @@ const WarehouseComponent = () => {
       mutationFn: updateWarehouse,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["warehouses"] });
-        message.success("Warehouse updated successfully");
+        // message.success("Warehouse updated successfully");
+        openNotification("Update Warehouse", "Warehouse Updated successfully");
         handleCancel();
       },
       onError: (error: any) => {
@@ -124,7 +138,8 @@ const WarehouseComponent = () => {
       mutationFn: deleteWarehouse,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["warehouses"] });
-        message.success("Case deleted successfully");
+        // message.success("Case deleted successfully");
+        openNotification("Delete Warehouse", "Warehouse Deleted successfully");
       },
       onError: (error: any) => {
         message.error(error);
@@ -177,6 +192,7 @@ const WarehouseComponent = () => {
 
   return (
     <section className="container mx-auto px-1">
+      {contextHolder}
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-x-3">
@@ -451,7 +467,7 @@ const WarehouseComponent = () => {
               className="me-1 mt-5 rounded-md bg-primary px-4 py-2 text-white"
               disabled={isPendingCreate}
             >
-              {isPendingCreate
+              {isPendingCreate || isPendingUpdate
                 ? "Submiting..."
                 : updateId
                   ? "Update"

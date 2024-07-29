@@ -5,7 +5,7 @@ import { LuArrowLeft, LuArrowRight, LuSearch } from "react-icons/lu";
 import { useRouter, useSearchParams } from "next/navigation";
 import Skeleton from "../../components/Skeleton";
 import Link from "next/link";
-import { getAllAssistant, Status } from "@/queries/assistant";
+import { getAllAssistant, Status } from "@/api/assistant";
 
 const AssistantComponent = () => {
   // fetch

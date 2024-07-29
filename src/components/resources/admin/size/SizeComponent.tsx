@@ -1,24 +1,24 @@
 "use client";
-import {
-  Case,
-  createCase,
-  deleteCase,
-  getAllCase,
-  ResponseAll,
-  updateCase,
-} from "@/api/case";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { LuArrowLeft, LuArrowRight, LuPlusCircle } from "react-icons/lu";
-import Skeleton from "../../components/Skeleton";
 import { message, Modal, notification, Popconfirm } from "antd";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { FaRegTrashCan } from "react-icons/fa6";
 import { FaRegEdit } from "react-icons/fa";
+import Skeleton from "../../components/Skeleton";
+import {
+  createSize,
+  deleteSize,
+  getAllSize,
+  ResponseAll,
+  Size,
+  updateSize,
+} from "@/api/size";
 
-const CaseComponent = () => {
+const SizeComponent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedPage = Number(searchParams.get("page")) || 1;
@@ -59,22 +59,22 @@ const CaseComponent = () => {
 
   // create or update
   const [updateId, setUpdateId] = useState<number>();
-  const handleEdit = (item: Case) => {
+  const handleEdit = (item: Size) => {
     setValue("name", item.name);
-    setValue("caseHeight", item.caseHeight);
-    setValue("caseWidth", item.caseWidth);
-    setValue("caseLenght", item.caseLenght);
+    setValue("containerHeight", item.containerHeight);
+    setValue("containerWidth", item.containerWidth);
+    setValue("containerLenght", item.containerLenght);
     showModal();
     setUpdateId(item.id);
   };
 
   const { mutateAsync: updateMutate, isPending: isPendingUpdate } = useMutation(
     {
-      mutationFn: updateCase,
+      mutationFn: updateSize,
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["cases"] });
-        // message.success("Case updated successfully");
-        openNotification("Update Case", "Case Updated successfully");
+        queryClient.invalidateQueries({ queryKey: ["sizes"] });
+        // message.success("Container updated successfully");
+        openNotification("Update Container", "Container Updated successfully");
         handleCancel();
       },
       onError: (error: any) => {
@@ -84,37 +84,37 @@ const CaseComponent = () => {
   );
 
   const { mutateAsync, isPending } = useMutation({
-    mutationFn: createCase,
+    mutationFn: createSize,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cases"] });
-      // message.success("Case created successfully");
-      openNotification("Create Case", "Case created successfully");
+      queryClient.invalidateQueries({ queryKey: ["sizes"] });
+      // message.success("Container created successfully");
+      openNotification("Create Container", "Container created successfully");
       handleCancel();
     },
     onError: (error: any) => {
       message.error(error);
     },
   });
-  const onSubmit: SubmitHandler<Case> = async (data) => {
+  const onSubmit: SubmitHandler<Size> = async (data) => {
     if (updateId) {
-      const caseData: Case = {
+      const containerData: Size = {
         id: updateId,
         name: data.name,
-        caseLenght: data.caseLenght,
-        caseWidth: data.caseWidth,
-        caseHeight: data.caseHeight,
+        containerLenght: data.containerLenght,
+        containerWidth: data.containerWidth,
+        containerHeight: data.containerHeight,
       };
 
-      await updateMutate(caseData);
+      await updateMutate(containerData);
     } else {
-      const caseData: Case = {
+      const containerData: Size = {
         name: data.name,
-        caseLenght: data.caseLenght,
-        caseWidth: data.caseWidth,
-        caseHeight: data.caseHeight,
+        containerLenght: data.containerLenght,
+        containerWidth: data.containerWidth,
+        containerHeight: data.containerHeight,
       };
 
-      await mutateAsync(caseData);
+      await mutateAsync(containerData);
     }
   };
 
@@ -124,18 +124,18 @@ const CaseComponent = () => {
     reset,
     formState: { errors },
     setValue,
-  } = useForm<Case>();
+  } = useForm<Size>();
 
   // end create or update
 
   // delete
   const { mutateAsync: deleteMutate, isPending: isPendingDelete } = useMutation(
     {
-      mutationFn: deleteCase,
+      mutationFn: deleteSize,
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["cases"] });
-        // message.success("Case deleted successfully");
-        openNotification("Delete Case", "Case Deleted successfully");
+        queryClient.invalidateQueries({ queryKey: ["sizes"] });
+        // message.success("Size deleted successfully");
+        openNotification("Delete Size", "Size Deleted successfully");
       },
       onError: (error: any) => {
         message.error(error);
@@ -149,8 +149,8 @@ const CaseComponent = () => {
 
   //fectch
   const { data, isLoading, isError } = useQuery<ResponseAll>({
-    queryKey: ["cases", page, limit],
-    queryFn: () => getAllCase(page, limit),
+    queryKey: ["sizes", page, limit],
+    queryFn: () => getAllSize(page, limit),
   });
 
   useEffect(() => {
@@ -175,16 +175,16 @@ const CaseComponent = () => {
   // end fectch
 
   return (
-    <section className="case mx-auto px-1">
+    <section className="container mx-auto px-1">
       {contextHolder}
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-x-3">
             <h2 className="text-lg font-medium text-gray-800 dark:text-white">
-              Case
+              Size
             </h2>
             <span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600 dark:bg-gray-800 dark:text-blue-400">
-              {data?.totalCount} Cases
+              {data?.totalCount} Sizes
             </span>
           </div>
         </div>
@@ -194,7 +194,7 @@ const CaseComponent = () => {
             className="flex shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary px-5 py-2 text-sm tracking-wide text-white transition-colors duration-200 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500"
           >
             <LuPlusCircle size={20} />
-            <span>Add case</span>
+            <span>Add Size</span>
           </button>
         </div>
       </div>
@@ -217,31 +217,31 @@ const CaseComponent = () => {
                       scope="col"
                       className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
                     >
-                      Case Name
+                      Container Name
                     </th>
                     <th
                       scope="col"
                       className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
                     >
-                      Case length
+                      Container length
                     </th>
                     <th
                       scope="col"
                       className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
                     >
-                      Case width
+                      Container width
                     </th>
                     <th
                       scope="col"
                       className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
                     >
-                      Case height
+                      Container height
                     </th>
                     <th
                       scope="col"
                       className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
                     >
-                      Case cubic
+                      Container cubic
                     </th>
                     <th
                       scope="col"
@@ -269,22 +269,22 @@ const CaseComponent = () => {
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm">
                         <h4 className="text-black dark:text-gray-200">
-                          {item.caseLenght} m
+                          {item.containerLenght} m
                         </h4>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm">
                         <h4 className="text-black dark:text-gray-200">
-                          {item.caseWidth} m
+                          {item.containerWidth} m
                         </h4>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm">
                         <h4 className="text-black dark:text-gray-200">
-                          {item.caseHeight} m
+                          {item.containerHeight} m
                         </h4>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm">
                         <h4 className="text-black dark:text-gray-200">
-                          {item.caseCubic} m³
+                          {item.containerCubic} m³
                         </h4>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm">
@@ -382,45 +382,45 @@ const CaseComponent = () => {
             </span>
           )}
           <div className="mt-2 text-slate-600">
-            Case length<span className="text-red">*</span>
+            Container length<span className="text-red">*</span>
           </div>
           <input
-            {...register("caseLenght", { required: true })}
+            {...register("containerLenght", { required: true })}
             type="number"
-            placeholder="Case length"
+            placeholder="Container length"
             className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 "
           />
-          {errors.caseLenght && (
+          {errors.containerLenght && (
             <span className="text-sm text-red-800">
-              Please input valid case lenght.
+              Please input valid container lenght.
             </span>
           )}
           <div className="mt-2 text-slate-600">
-            Case width<span className="text-red">*</span>
+            Container width<span className="text-red">*</span>
           </div>
           <input
-            {...register("caseWidth", { required: true })}
+            {...register("containerWidth", { required: true })}
             type="number"
-            placeholder="Case width"
+            placeholder="Container width"
             className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 "
           />
-          {errors.caseWidth && (
+          {errors.containerWidth && (
             <span className="text-sm text-red-800">
-              Please input valid case width.
+              Please input valid container width.
             </span>
           )}
           <div className="mt-2 text-slate-600">
-            Case height<span className="text-red">*</span>
+            Container height<span className="text-red">*</span>
           </div>
           <input
-            {...register("caseHeight", { required: true })}
+            {...register("containerHeight", { required: true })}
             type="number"
-            placeholder="Case height"
+            placeholder="Container height"
             className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 "
           />
-          {errors.caseHeight && (
+          {errors.containerHeight && (
             <span className="text-sm text-red-800">
-              Please input valid case height.
+              Please input valid container height.
             </span>
           )}
           <div className="flex w-full items-center justify-end">
@@ -444,4 +444,4 @@ const CaseComponent = () => {
   );
 };
 
-export default CaseComponent;
+export default SizeComponent;

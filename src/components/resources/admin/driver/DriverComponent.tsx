@@ -2,7 +2,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useState } from "react";
 import { LuArrowLeft, LuArrowRight, LuSearch } from "react-icons/lu";
-import { getAllDriver, Status } from "@/queries/driver";
+import { getAllDriver, Status } from "@/api/driver";
 import { useRouter, useSearchParams } from "next/navigation";
 import Skeleton from "../../components/Skeleton";
 import Link from "next/link";
