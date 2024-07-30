@@ -8,7 +8,7 @@ import {
   updateWarehouse,
   Warehouse,
 } from "@/api/warehouse";
-import { message, Modal, notification, Popconfirm } from "antd";
+import { Input, message, Modal, notification, Popconfirm } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { FaRegEdit } from "react-icons/fa";
@@ -22,6 +22,7 @@ import {
 import Skeleton from "../../components/Skeleton";
 import Link from "next/link";
 import { SubmitHandler, useForm } from "react-hook-form";
+import TableSeleton from "../../components/TableSeleton";
 
 const WarehouseComponent = () => {
   const router = useRouter();
@@ -163,9 +164,9 @@ const WarehouseComponent = () => {
     setLimit(selectedLimit);
   }, [selectedPage, selectedLimit]);
 
-  if (isLoading) {
-    return <Skeleton />;
-  }
+  // if (isLoading) {
+  //   return <Skeleton />;
+  // }
   if (isError) {
     return <div>Something happened</div>;
   }
@@ -205,142 +206,143 @@ const WarehouseComponent = () => {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-x-3">
-          <button
-            onClick={showModal}
-            className="flex shrink-0 items-center justify-center gap-x-2 rounded-md bg-primary px-5 py-2 text-sm tracking-wide text-white transition-colors duration-200 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500"
-          >
-            <LuPlusCircle size={20} />
-            <span>Add Warehouse</span>
-          </button>
+        <div
+          title="Create"
+          className="flex cursor-pointer justify-center rounded-md bg-primary p-1"
+        >
+          <LuPlusCircle color="white" size={20} onClick={showModal} />
         </div>
       </div>
       <div className="mt-3 md:flex md:items-center md:justify-end">
-        <div className="relative mt-4 flex items-center md:mt-0">
-          <span className="absolute ms-4">
-            <LuSearch size={20} />
-          </span>
-          <input
+        <div className="flex flex-col ">
+          <Input
+            style={{ width: 250 }}
+            prefix={<LuSearch />}
             onChange={handleChangeSearch}
-            value={search}
+            value={search ? search : query}
             onKeyDown={handleSearch}
             type="text"
             placeholder="Search"
-            className="block w-full rounded-sm border border-gray-200 bg-white py-1.5 pl-11 pr-5 text-black placeholder-gray-400/70 focus:border-primary focus:outline-none focus:ring-blue-300 focus:ring-opacity-40 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-blue-300 md:w-80 rtl:pl-5 rtl:pr-11"
           />
         </div>
       </div>
-      <div className="mt-3 flex flex-col">
-        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-            <div className="overflow-hidden border border-gray-200 dark:border-gray-700 md:rounded-sm">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-800">
-                  <tr>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      <button className="flex items-center gap-x-3 focus:outline-none">
-                        NO.
-                      </button>
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Name
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Latitude
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      longitude
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Information
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                {data?.data.map((item, index) => (
-                  <tbody
-                    className="divide-y divide-gray-200 bg-white hover:bg-slate-100 dark:divide-gray-700 dark:bg-gray-900"
-                    key={item.id}
-                  >
+      {isLoading ? (
+        <div>
+          <TableSeleton />
+        </div>
+      ) : (
+        <div className="mt-3 flex flex-col">
+          <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+            <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+              <div className="overflow-hidden border border-gray-200 dark:border-gray-700 md:rounded-sm">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {(page - 1) * limit + index + 1}
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.name}
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.lat}
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.long}
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="... w-[300px] truncate text-black dark:text-gray-200">
-                          {item.information}
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="flex text-black dark:text-gray-200">
-                          <FaRegEdit
-                            size={18}
-                            color="blue"
-                            className="mx-1 cursor-pointer"
-                            title="Edit item"
-                            onClick={() => handleEdit(item)}
-                          />
-                          <Popconfirm
-                            title="Delete"
-                            description="Are you sure to delete?"
-                            okText="Yes"
-                            cancelText="No"
-                            onConfirm={() => handleDelete(item.id || 0)}
-                          >
-                            <FaRegTrashCan
-                              size={18}
-                              color="red"
-                              className="mx-1 cursor-pointer"
-                              title="Delete item"
-                            />
-                          </Popconfirm>
-                        </h4>
-                      </td>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        <button className="flex items-center gap-x-3 focus:outline-none">
+                          NO.
+                        </button>
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Name
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Latitude
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        longitude
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Information
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Action
+                      </th>
                     </tr>
-                  </tbody>
-                ))}
-              </table>
+                  </thead>
+                  {data?.data.map((item, index) => (
+                    <tbody
+                      className="divide-y divide-gray-200 bg-white hover:bg-slate-100 dark:divide-gray-700 dark:bg-gray-900"
+                      key={item.id}
+                    >
+                      <tr>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {(page - 1) * limit + index + 1}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.name}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.lat}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.long}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="... w-[300px] truncate text-black dark:text-gray-200">
+                            {item.information}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="flex text-black dark:text-gray-200">
+                            <FaRegEdit
+                              size={18}
+                              color="blue"
+                              className="mx-1 cursor-pointer"
+                              title="Edit item"
+                              onClick={() => handleEdit(item)}
+                            />
+                            <Popconfirm
+                              title="Delete"
+                              description="Are you sure to delete?"
+                              okText="Yes"
+                              cancelText="No"
+                              onConfirm={() => handleDelete(item.id || 0)}
+                            >
+                              <FaRegTrashCan
+                                size={18}
+                                color="red"
+                                className="mx-1 cursor-pointer"
+                                title="Delete item"
+                              />
+                            </Popconfirm>
+                          </h4>
+                        </td>
+                      </tr>
+                    </tbody>
+                  ))}
+                </table>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
       <div className="mt-6 sm:flex sm:items-center sm:justify-between">
         <div className="text-sm text-gray-500 dark:text-gray-400">
           Page

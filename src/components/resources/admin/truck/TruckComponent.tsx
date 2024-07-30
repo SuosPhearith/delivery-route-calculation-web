@@ -1,6 +1,14 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { message, Modal, notification, Popconfirm, Select } from "antd";
+import {
+  Input,
+  message,
+  Modal,
+  notification,
+  Popconfirm,
+  Select,
+  SelectProps,
+} from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { FaRegEdit } from "react-icons/fa";
@@ -14,7 +22,7 @@ import {
 } from "react-icons/lu";
 import Skeleton from "../../components/Skeleton";
 import Link from "next/link";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import {
   createTruck,
   deleteTruck,
@@ -25,12 +33,15 @@ import {
   getAllTrucks,
   getAllTruckSizes,
   getAllWarehouses,
+  getAllZones,
   ResponseAll,
   Truck,
   updateTruck,
 } from "@/api/truck";
 import { TbUsers } from "react-icons/tb";
 import { findAllOfficerControll } from "@/api/zone";
+import { GrPowerReset } from "react-icons/gr";
+import TableSeleton from "../../components/TableSeleton";
 
 const TruckComponent = () => {
   const router = useRouter();
@@ -42,6 +53,11 @@ const TruckComponent = () => {
   const [limit, setLimit] = useState(selectedLimit);
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState(selectedQuery);
+  const [truckSizeId, setTruckSizeId] = useState("");
+  const [zoneId, setzoneId] = useState("");
+  const [fuelId, setfuelId] = useState("");
+  const [warehouseId, setwarehouseId] = useState("");
+  const [truckOwnershipTypeId, settruckOwnershipTypeId] = useState("");
   const [status, setStatus] = useState("");
   const queryClient = useQueryClient();
   const [api, contextHolder] = notification.useNotification();
@@ -59,6 +75,7 @@ const TruckComponent = () => {
   };
 
   // create or update
+
   const [updateId, setUpdateId] = useState<number>();
   const handleEdit = (item: Truck) => {
     reset();
@@ -70,8 +87,14 @@ const TruckComponent = () => {
     setValue("zoneId", item.zoneId);
     setValue("warehouseId", item.warehouseId);
     setValue("fuelId", item.fuelId);
-    // setValue("driver", item.driver);
-    // setValue("assistant", item.assistant);
+    setValue(
+      "TruckDriver",
+      item.TruckDriver?.map((item) => item.driver.id),
+    );
+    setValue(
+      "TruckAssistant",
+      item.TruckAssistant?.map((item) => item.assistant.id),
+    );
     setValue("truckOwnershipTypeId", item.truckOwnershipTypeId);
     showModal();
     setUpdateId(item.id);
@@ -114,8 +137,8 @@ const TruckComponent = () => {
       zoneId: data.zoneId,
       warehouseId: data.warehouseId,
       fuelId: data.fuelId,
-      // driver:  data.driver,
-      // assistant:  data.assistant,
+      TruckDriver: data.TruckDriver,
+      TruckAssistant: data.TruckAssistant,
       truckOwnershipTypeId: data.truckOwnershipTypeId,
     };
     if (updateId) {
@@ -130,6 +153,7 @@ const TruckComponent = () => {
     reset,
     formState: { errors },
     setValue,
+    control,
   } = useForm<Truck>();
   // end create or update
 
@@ -171,8 +195,30 @@ const TruckComponent = () => {
 
   //fectch
   const { data, isLoading, isError } = useQuery<ResponseAll>({
-    queryKey: ["zones", page, limit, status, query],
-    queryFn: () => getAllTrucks(page, limit, status, query),
+    queryKey: [
+      "zones",
+      page,
+      limit,
+      status,
+      query,
+      truckSizeId,
+      zoneId,
+      fuelId,
+      warehouseId,
+      truckOwnershipTypeId,
+    ],
+    queryFn: () =>
+      getAllTrucks(
+        page,
+        limit,
+        status,
+        query,
+        truckSizeId,
+        zoneId,
+        fuelId,
+        warehouseId,
+        truckOwnershipTypeId,
+      ),
   });
 
   const {
@@ -232,6 +278,14 @@ const TruckComponent = () => {
     queryKey: ["getAllTruckAssistants"],
     queryFn: getAllTruckAssistants,
   });
+  const {
+    data: getAllZonesData,
+    isLoading: isLoadinggetAllZones,
+    isError: isErrorgetAllZones,
+  } = useQuery({
+    queryKey: ["getAllZones"],
+    queryFn: getAllZones,
+  });
 
   useEffect(() => {
     setPage(selectedPage);
@@ -239,7 +293,8 @@ const TruckComponent = () => {
   }, [selectedPage, selectedLimit]);
 
   if (
-    isLoading ||
+    // isLoading ||
+    isLoadinggetAllZones ||
     isLoadingofficerControlls ||
     isLoadingfindAllTruckOwnershipTypes ||
     isLoadinggetAllTruckAssistants ||
@@ -251,7 +306,8 @@ const TruckComponent = () => {
     return <Skeleton />;
   }
   if (
-    isError ||
+    // isError ||
+    isErrorgetAllZones ||
     isErrorfficerControlls ||
     isErrorfindAllTruckOwnershipTypes ||
     isErrorgetAllTruckAssistants ||
@@ -284,6 +340,15 @@ const TruckComponent = () => {
       router.push("truck");
     }
   };
+
+  const resetFilter = () => {
+    setStatus("");
+    setTruckSizeId("");
+    setzoneId("");
+    setfuelId("");
+    setwarehouseId("");
+    settruckOwnershipTypeId("");
+  };
   // end fectch
 
   return (
@@ -295,245 +360,323 @@ const TruckComponent = () => {
             <h2 className="text-lg font-medium text-gray-800 dark:text-white">
               Truck
             </h2>
-            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600 dark:bg-gray-800 dark:text-blue-400">
+            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-primary dark:bg-gray-800 dark:text-blue-400">
               {data?.totalCount} Trucks
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-x-3">
-          <button
-            onClick={showModal}
-            className="flex shrink-0 items-center justify-center gap-x-2 rounded-md bg-primary px-5 py-2 text-sm tracking-wide text-white transition-colors duration-200 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500"
-          >
-            <LuPlusCircle size={20} />
-            <span>Add Truck</span>
-          </button>
+        <div
+          title="Create"
+          className="flex cursor-pointer justify-center rounded-md bg-primary p-1"
+        >
+          <LuPlusCircle color="white" size={20} onClick={showModal} />
         </div>
       </div>
-      <div className="mt-3 md:flex md:items-center md:justify-between">
-        <div className="inline-flex divide-x overflow-hidden rounded-sm border bg-white dark:divide-gray-700 dark:border-gray-700 dark:bg-gray-900 rtl:flex-row-reverse">
-          <button
-            onClick={() => setStatus("")}
-            className={`${status === "" ? "text-primary " : "text-black "}rounded-sm px-5 py-2 text-xs font-medium transition-colors duration-200 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 sm:text-sm`}
-          >
-            VIEW ALL
-          </button>
-          <button
-            onClick={() => setStatus("AVAILABLE")}
-            className={`${status === "AVAILABLE" ? "text-primary " : "text-black "}rounded-sm px-5 py-2 text-xs font-medium transition-colors duration-200 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 sm:text-sm`}
-          >
-            AVAILABLE
-          </button>
-          <button
-            onClick={() => setStatus("IN_USE")}
-            className={`${status === "IN_USE" ? "text-primary " : "text-black "}rounded-sm px-5 py-2 text-xs font-medium transition-colors duration-200 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 sm:text-sm`}
-          >
-            IN_USE
-          </button>
-          <button
-            onClick={() => setStatus("MAINTENANCE")}
-            className={`${status === "MAINTENANCE" ? "text-primary " : "text-black "}rounded-sm px-5 py-2 text-xs font-medium transition-colors duration-200 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 sm:text-sm`}
-          >
-            MAINTENANCE
-          </button>
+      <div className=" md:flex md:items-center md:justify-between">
+        <div className="flex flex-col ">
+          <p className="me-1 text-xs">Status:</p>
+          <Select
+            showSearch
+            style={{ width: 150 }}
+            defaultValue=""
+            value={status}
+            optionFilterProp="label"
+            onChange={(value) => setStatus(value)}
+            options={[
+              {
+                value: "",
+                label: "All",
+              },
+              {
+                value: "AVAILABLE",
+                label: "AVAILABLE",
+              },
+              {
+                value: "IN_USE",
+                label: "IN_USE",
+              },
+              {
+                value: "MAINTENANCE",
+                label: "MAINTENANCE",
+              },
+            ]}
+          />
         </div>
-        <div className="relative mt-4 flex items-center md:mt-0">
-          <span className="absolute ms-4">
-            <LuSearch size={20} />
-          </span>
-          <input
+        <div className="flex flex-col ">
+          <p className="me-1 text-xs">Size:</p>
+          <Select
+            showSearch
+            style={{ width: 100 }}
+            defaultValue=""
+            value={truckSizeId}
+            optionFilterProp="label"
+            onChange={(value) => setTruckSizeId(value)}
+            options={[{ value: "", label: "All" }, ...getAllTruckSizesData]}
+          />
+        </div>
+        <div className="flex flex-col ">
+          <p className="me-1 text-xs">Zone:</p>
+          <Select
+            showSearch
+            style={{ width: 200 }}
+            defaultValue=""
+            value={zoneId}
+            optionFilterProp="label"
+            onChange={(value) => setzoneId(value)}
+            options={[{ value: "", label: "All" }, ...getAllZonesData]}
+          />
+        </div>
+        <div className="flex flex-col ">
+          <p className="me-1 text-xs">Fuel:</p>
+          <Select
+            showSearch
+            style={{ width: 150 }}
+            defaultValue=""
+            value={fuelId}
+            optionFilterProp="label"
+            onChange={(value) => setfuelId(value)}
+            options={[{ value: "", label: "All" }, ...getAllTruckFuelsData]}
+          />
+        </div>
+        <div className="flex flex-col ">
+          <p className="me-1 text-xs">Warehouse:</p>
+          <Select
+            showSearch
+            style={{ width: 150 }}
+            defaultValue=""
+            value={warehouseId}
+            optionFilterProp="label"
+            onChange={(value) => setwarehouseId(value)}
+            options={[{ value: "", label: "All" }, ...getAllWarehousesData]}
+          />
+        </div>
+        <div className="flex flex-col ">
+          <p className="me-1 text-xs">Ownership:</p>
+          <Select
+            showSearch
+            style={{ width: 150 }}
+            defaultValue=""
+            value={truckOwnershipTypeId}
+            optionFilterProp="label"
+            onChange={(value) => settruckOwnershipTypeId(value)}
+            options={[
+              { value: "", label: "All" },
+              ...getAllTruckOwnershipTypesData,
+            ]}
+          />
+        </div>
+        <div className="flex flex-col ">
+          <p className="me-1 text-xs">Reset:</p>
+          <div
+            title="Reset filter"
+            onClick={resetFilter}
+            className="flex cursor-pointer justify-center rounded-md bg-primary p-1"
+          >
+            <GrPowerReset color="white" size={20} />
+          </div>
+        </div>
+        <div className="flex flex-col">
+          <p className="me-1 text-xs">.</p>
+          <Input
+            style={{ width: 250 }}
+            prefix={<LuSearch />}
             onChange={handleChangeSearch}
             value={search ? search : query}
             onKeyDown={handleSearch}
             type="text"
             placeholder="Search"
-            className="block w-full rounded-sm border border-gray-200 bg-white py-1.5 pl-11 pr-5 text-black placeholder-gray-400/70 focus:border-primary focus:outline-none focus:ring-blue-300 focus:ring-opacity-40 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-blue-300 md:w-80 rtl:pl-5 rtl:pr-11"
           />
         </div>
       </div>
-      <div className="mt-3 flex flex-col">
-        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-            <div className="overflow-hidden border border-gray-200 dark:border-gray-700 md:rounded-sm">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-800">
-                  <tr>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      <button className="flex items-center gap-x-3 focus:outline-none">
-                        NO.
-                      </button>
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      License Plate
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Model
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Manufacturer
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Functioning
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Truck
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Warehouse
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Ownership
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Size
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Fuel
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Status
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                {data?.data.map((item, index) => (
-                  <tbody
-                    className="divide-y divide-gray-200 bg-white hover:bg-slate-100 dark:divide-gray-700 dark:bg-gray-900"
-                    key={item.id}
-                  >
+      {isLoading ? (
+        <div>
+          <TableSeleton />
+        </div>
+      ) : (
+        <div className="mt-3 flex flex-col">
+          <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+            <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+              <div className="overflow-hidden border border-gray-200 dark:border-gray-700 md:rounded-md">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {(page - 1) * limit + index + 1}
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.licensePlate}
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.model}
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.manufacturer}
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.functioning}
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.zone?.code}
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.warehouse?.name}
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.truckOwnershipType?.name}
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.truckSize?.name}
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.fuel?.name}
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.status}
-                        </h4>
-                      </td>
-
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="flex text-black dark:text-gray-200">
-                          <TbUsers
-                            size={18}
-                            className="mx-1 cursor-pointer"
-                            title="view driver and assistant"
-                          />
-                          <FaRegEdit
-                            size={18}
-                            color="blue"
-                            className="mx-1 cursor-pointer"
-                            title="Edit item"
-                            onClick={() => handleEdit(item)}
-                          />
-                          <Popconfirm
-                            title="Delete"
-                            description="Are you sure to delete?"
-                            okText="Yes"
-                            cancelText="No"
-                            onConfirm={() => handleDelete(item.id || 0)}
-                          >
-                            <FaRegTrashCan
-                              size={18}
-                              color="red"
-                              className="mx-1 cursor-pointer"
-                              title="Delete item"
-                            />
-                          </Popconfirm>
-                        </h4>
-                      </td>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        <button className="flex items-center gap-x-3 focus:outline-none">
+                          NO.
+                        </button>
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        License Plate
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Model
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Manufacturer
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Functioning
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Zone
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Warehouse
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Ownership
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Size
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Fuel
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Status
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Action
+                      </th>
                     </tr>
-                  </tbody>
-                ))}
-              </table>
+                  </thead>
+                  {data?.data.map((item, index) => (
+                    <tbody
+                      className="divide-y divide-gray-200 bg-white hover:bg-slate-100 dark:divide-gray-700 dark:bg-gray-900"
+                      key={item.id}
+                    >
+                      <tr>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {(page - 1) * limit + index + 1}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.licensePlate}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.model}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.manufacturer}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.functioning}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.zone?.code}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.warehouse?.name}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.truckOwnershipType?.name}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.truckSize?.name}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.fuel?.name}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.status}
+                          </h4>
+                        </td>
+
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="flex text-black dark:text-gray-200">
+                            <TbUsers
+                              size={18}
+                              className="mx-1 cursor-pointer"
+                              title="view driver and assistant"
+                            />
+                            <FaRegEdit
+                              size={18}
+                              color="blue"
+                              className="mx-1 cursor-pointer"
+                              title="Edit item"
+                              onClick={() => handleEdit(item)}
+                            />
+                            <Popconfirm
+                              title="Delete"
+                              description="Are you sure to delete?"
+                              okText="Yes"
+                              cancelText="No"
+                              onConfirm={() => handleDelete(item.id || 0)}
+                            >
+                              <FaRegTrashCan
+                                size={18}
+                                color="red"
+                                className="mx-1 cursor-pointer"
+                                title="Delete item"
+                              />
+                            </Popconfirm>
+                          </h4>
+                        </td>
+                      </tr>
+                    </tbody>
+                  ))}
+                </table>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
       <div className="mt-6 sm:flex sm:items-center sm:justify-between">
         <div className="text-sm text-gray-500 dark:text-gray-400">
           Page
@@ -573,179 +716,290 @@ const TruckComponent = () => {
       <Modal
         title={updateId ? "Update" : "Create"}
         className="font-satoshi"
+        style={{ top: 20 }}
         open={isModalOpen}
         onOk={handleOk}
         onCancel={handleCancel}
-        closable={false}
+        width={1000}
+        maskClosable={false}
         footer
       >
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="mt-2 text-slate-600">
-            licensePlate<span className="text-red">*</span>
+          <div className="flex w-full justify-between">
+            <div className="w-[49%]">
+              <div className="mt-2 text-slate-600">
+                License Plate<span className="text-red">*</span>
+              </div>
+              <Controller
+                name="licensePlate"
+                control={control}
+                rules={{ required: "This field is required" }}
+                render={({ field }) => (
+                  <Input
+                    size="large"
+                    type="text"
+                    {...field}
+                    placeholder="License Plate"
+                  />
+                )}
+              />
+              {errors.licensePlate && (
+                <span className="text-sm text-red-800">
+                  Please input valid License Plate.
+                </span>
+              )}
+              <div className="mt-2 text-slate-600">
+                Functioning<span className="text-red">*</span>
+              </div>
+              <Controller
+                name="functioning"
+                control={control}
+                rules={{ required: "This field is required" }}
+                render={({ field }) => (
+                  <Input
+                    size="large"
+                    type="text"
+                    {...field}
+                    placeholder="Functioning"
+                  />
+                )}
+              />
+              {errors.functioning && (
+                <span className="text-sm text-red-800">
+                  Please input valid Functioning.
+                </span>
+              )}
+            </div>
+            <div className="w-[49%]">
+              <div className="mt-2 text-slate-600">
+                Model<span className="text-red">*</span>
+              </div>
+              <Controller
+                name="model"
+                control={control}
+                rules={{ required: "This field is required" }}
+                render={({ field }) => (
+                  <Input
+                    size="large"
+                    type="text"
+                    {...field}
+                    placeholder="Model"
+                  />
+                )}
+              />
+              {errors.model && (
+                <span className="text-sm text-red-800">
+                  Please input valid Model.
+                </span>
+              )}
+              <div className="mt-2 text-slate-600">
+                Manufacturer<span className="text-red">*</span>
+              </div>
+              <Controller
+                name="manufacturer"
+                control={control}
+                rules={{ required: "This field is required" }}
+                render={({ field }) => (
+                  <Input
+                    size="large"
+                    type="text"
+                    {...field}
+                    placeholder="Manufacturer"
+                  />
+                )}
+              />
+              {errors.manufacturer && (
+                <span className="text-sm text-red-800">
+                  Please input valid Manufacturer.
+                </span>
+              )}
+            </div>
           </div>
-          <input
-            {...register("licensePlate", { required: true })}
-            type="text"
-            placeholder="licensePlate"
-            className=" w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 "
-          />
-          {errors.licensePlate && (
-            <span className="text-sm text-red-800">
-              Please input valid licensePlate.
-            </span>
-          )}
-          <div className="mt-2 text-slate-600">
-            functioning<span className="text-red">*</span>
+          <div className="w-full justify-between"></div>
+          <div className="flex w-full justify-between">
+            <div className="w-[49%]">
+              <div className="mt-2 text-slate-600">
+                Zone<span className="text-red">*</span>
+              </div>
+              <Controller
+                name="zoneId"
+                control={control}
+                rules={{ required: "This field is required" }}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    size="large"
+                    style={{ width: "100%" }}
+                    placeholder="Please select"
+                    onChange={(value) => field.onChange(value)} // Ensure onChange event is handled
+                    options={getAllZonesData}
+                    showSearch
+                    filterOption={(input, option: any) =>
+                      option.label.toLowerCase().includes(input.toLowerCase())
+                    }
+                  />
+                )}
+              />
+              {errors.zoneId && (
+                <span className="text-sm text-red-800">Please select.</span>
+              )}
+              <div className="mt-2 text-slate-600">
+                Warehouse<span className="text-red">*</span>
+              </div>
+              <Controller
+                name="warehouseId"
+                control={control}
+                rules={{ required: "This field is required" }}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    size="large"
+                    style={{ width: "100%" }}
+                    placeholder="Please select"
+                    onChange={(value) => field.onChange(value)} // Ensure onChange event is handled
+                    options={getAllWarehousesData}
+                    showSearch
+                    filterOption={(input, option: any) =>
+                      option.label.toLowerCase().includes(input.toLowerCase())
+                    }
+                  />
+                )}
+              />
+              {errors.warehouseId && (
+                <span className="text-sm text-red-800">Please select.</span>
+              )}
+            </div>
+            <div className="w-[49%]">
+              <div className="mt-2 text-slate-600">
+                Fuel<span className="text-red">*</span>
+              </div>
+              <Controller
+                name="fuelId"
+                control={control}
+                rules={{ required: "This field is required" }}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    size="large"
+                    style={{ width: "100%" }}
+                    placeholder="Please select"
+                    onChange={(value) => field.onChange(value)} // Ensure onChange event is handled
+                    options={getAllTruckFuelsData}
+                    showSearch
+                    filterOption={(input, option: any) =>
+                      option.label.toLowerCase().includes(input.toLowerCase())
+                    }
+                  />
+                )}
+              />
+              {errors.fuelId && (
+                <span className="text-sm text-red-800">Please select.</span>
+              )}
+              <div className="mt-2 text-slate-600">
+                Ownership<span className="text-red">*</span>
+              </div>
+              <Controller
+                name="truckOwnershipTypeId"
+                control={control}
+                rules={{ required: "This field is required" }}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    size="large"
+                    style={{ width: "100%" }}
+                    placeholder="Please select"
+                    onChange={(value) => field.onChange(value)} // Ensure onChange event is handled
+                    options={getAllTruckOwnershipTypesData}
+                    showSearch
+                    filterOption={(input, option: any) =>
+                      option.label.toLowerCase().includes(input.toLowerCase())
+                    }
+                  />
+                )}
+              />
+              {errors.truckOwnershipTypeId && (
+                <span className="text-sm text-red-800">Please select.</span>
+              )}
+            </div>
           </div>
-          <input
-            {...register("functioning", { required: true })}
-            type="text"
-            placeholder="functioning"
-            className=" w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 "
-          />
-          {errors.functioning && (
-            <span className="text-sm text-red-800">
-              Please input valid functioning.
-            </span>
-          )}
-          <div className="mt-2 text-slate-600">
-            model<span className="text-red">*</span>
+          <div className="w-full">
+            <div className="mt-2 text-slate-600">
+              Size<span className="text-red">*</span>
+            </div>
+            <Controller
+              name="truckSizeId"
+              control={control}
+              rules={{ required: "This field is required" }}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  size="large"
+                  style={{ width: "100%" }}
+                  placeholder="Please select"
+                  onChange={(value) => field.onChange(value)} // Ensure onChange event is handled
+                  options={getAllTruckSizesData}
+                  showSearch
+                  filterOption={(input, option: any) =>
+                    option.label.toLowerCase().includes(input.toLowerCase())
+                  }
+                />
+              )}
+            />
+            {errors.truckSizeId && (
+              <span className="text-sm text-red-800">Please select.</span>
+            )}
+            <div className="mt-2 text-slate-600">
+              Drivers<span className="text-red">*</span>
+            </div>
+            <Controller
+              name="TruckDriver"
+              control={control}
+              rules={{ required: "This field is required" }}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  size="large"
+                  mode="multiple"
+                  style={{ width: "100%" }}
+                  placeholder="Please select"
+                  options={getAllTruckDriversData}
+                  showSearch
+                  filterOption={(input, option: any) =>
+                    option.label.toLowerCase().includes(input.toLowerCase())
+                  }
+                />
+              )}
+            />
+            {errors.TruckDriver && (
+              <span className="text-sm text-red-800">Please select.</span>
+            )}
+            <div className="mt-2 text-slate-600">
+              Assistants<span className="text-red">*</span>
+            </div>
+            <Controller
+              name="TruckAssistant"
+              control={control}
+              rules={{ required: "This field is required" }}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  size="large"
+                  mode="multiple"
+                  style={{ width: "100%" }}
+                  placeholder="Please select"
+                  options={getAllTruckAssistantsData}
+                  showSearch
+                  filterOption={(input, option: any) =>
+                    option.label.toLowerCase().includes(input.toLowerCase())
+                  }
+                />
+              )}
+            />
+            {errors.TruckAssistant && (
+              <span className="text-sm text-red-800">Please select.</span>
+            )}
           </div>
-          <input
-            {...register("model", { required: true })}
-            type="text"
-            placeholder="model"
-            className=" w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 "
-          />
-          {errors.model && (
-            <span className="text-sm text-red-800">
-              Please input valid model.
-            </span>
-          )}
-          <div className="mt-2 text-slate-600">
-            manufacturer<span className="text-red">*</span>
-          </div>
-          <input
-            {...register("manufacturer", { required: true })}
-            type="text"
-            placeholder="manufacturer"
-            className=" w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 "
-          />
-          {errors.manufacturer && (
-            <span className="text-sm text-red-800">
-              Please input valid manufacturer.
-            </span>
-          )}
-          <div className="mt-2 text-slate-600">
-            truckSizeId<span className="text-red">*</span>
-          </div>
-          <select
-            {...register("truckSizeId", { required: true })}
-            id="truckSizeId"
-            name="truckSizeId"
-            className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2"
-          >
-            <option value="" className="hidden">
-              Select Officer Controll
-            </option>
-            {getAllTruckSizesData?.map((item: any) => (
-              <option
-                key={item?.id}
-                value={`${item?.value}`}
-              >{`${item?.label}`}</option>
-            ))}
-          </select>
-          {errors.truckSizeId && (
-            <span className="text-sm text-red-800">Please select.</span>
-          )}
-          <div className="mt-2 text-slate-600">
-            zoneId<span className="text-red">*</span>
-          </div>
-          <select
-            {...register("zoneId", { required: true })}
-            id="zoneId"
-            name="zoneId"
-            className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2"
-          >
-            <option value="" className="hidden">
-              Select zoneId
-            </option>
-            {getAllTruckSizesData?.map((item: any) => (
-              <option
-                key={item?.id}
-                value={`${item?.value}`}
-              >{`${item?.label}`}</option>
-            ))}
-          </select>
-          {errors.zoneId && (
-            <span className="text-sm text-red-800">Please select.</span>
-          )}
-          <div className="mt-2 text-slate-600">
-            warehouseId<span className="text-red">*</span>
-          </div>
-          <select
-            {...register("warehouseId", { required: true })}
-            id="warehouseId"
-            name="warehouseId"
-            className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2"
-          >
-            <option value="" className="hidden">
-              Select warehouseId
-            </option>
-            {getAllWarehousesData?.map((item: any) => (
-              <option
-                key={item?.id}
-                value={`${item?.value}`}
-              >{`${item?.label}`}</option>
-            ))}
-          </select>
-          {errors.warehouseId && (
-            <span className="text-sm text-red-800">Please select.</span>
-          )}
-          <div className="mt-2 text-slate-600">
-            fuelId<span className="text-red">*</span>
-          </div>
-          <select
-            {...register("fuelId", { required: true })}
-            id="fuelId"
-            name="fuelId"
-            className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2"
-          >
-            <option value="" className="hidden">
-              Select fuelId
-            </option>
-            {getAllTruckFuelsData?.map((item: any) => (
-              <option
-                key={item?.id}
-                value={`${item?.value}`}
-              >{`${item?.label}`}</option>
-            ))}
-          </select>
-          {errors.fuelId && (
-            <span className="text-sm text-red-800">Please select.</span>
-          )}
-          <div className="mt-2 text-slate-600">
-            truckOwnershipTypeId<span className="text-red">*</span>
-          </div>
-          <select
-            {...register("truckOwnershipTypeId", { required: true })}
-            id="truckOwnershipTypeId"
-            name="truckOwnershipTypeId"
-            className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2"
-          >
-            <option value="" className="hidden">
-              Select truckOwnershipTypeId
-            </option>
-            {getAllTruckOwnershipTypesData?.map((item: any) => (
-              <option
-                key={item?.id}
-                value={`${item?.value}`}
-              >{`${item?.label}`}</option>
-            ))}
-          </select>
-          {errors.truckOwnershipTypeId && (
-            <span className="text-sm text-red-800">Please select.</span>
-          )}
+
           <div className="flex w-full items-center justify-end">
             <div
               onClick={handleCancel}

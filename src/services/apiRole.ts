@@ -1,18 +1,13 @@
-import axios from "axios";
-
-type meType = {
-  roleId: number;
-};
+import { getRefreshToken } from "./saveToken";
+import apiRequest from "./apiRequest";
 const apiRole = async () => {
   try {
-    const response: any = await axios.get(
-      `${process.env.NEXT_PUBLIC_API_URL}/auth/me`,
-      { withCredentials: true },
-    );
-    const data: meType = response.data;
-    return data.roleId;
+    const response = await apiRequest("POST", "/keycloak/auth/introspect", {
+      token: getRefreshToken(),
+    });
+    return response.role;
   } catch (error) {
-    return (window.location.href = "/auth/signin");
+    window.location.href = "/auth/signin";
   }
 };
 

@@ -31,34 +31,6 @@ interface Fuel {
   name: string;
 }
 
-interface Driver {
-  id: number;
-  email: string;
-  username: string;
-  name: string;
-  client_id: string;
-  status: string;
-  Role: string;
-}
-
-interface TruckDriver {
-  driver: Driver;
-}
-
-interface Assistant {
-  id: number;
-  email: string;
-  username: string;
-  name: string;
-  client_id: string;
-  status: string;
-  Role: string;
-}
-
-interface TruckAssistant {
-  assistant: Assistant;
-}
-
 export interface Truck {
   id?: number;
   truckSizeId: number;
@@ -78,8 +50,8 @@ export interface Truck {
   warehouse?: Warehouse;
   truckSize?: TruckSize;
   fuel?: Fuel;
-  TruckDriver?: TruckDriver[];
-  TruckAssistant?: TruckAssistant[];
+  TruckDriver?: any[];
+  TruckAssistant?: any[];
 }
 
 export interface ResponseAll {
@@ -95,6 +67,11 @@ export const getAllTrucks = async (
   limit: number,
   status: string | "",
   query: string,
+  truckSizeId: string,
+  zoneId: string,
+  fuelId: string,
+  warehouseId: string,
+  truckOwnershipTypeId: string,
 ): Promise<ResponseAll> => {
   try {
     // Create a query string based on provided parameters
@@ -109,6 +86,26 @@ export const getAllTrucks = async (
 
     if (query) {
       params.append("query", query);
+    }
+
+    if (truckSizeId) {
+      params.append("truckSizeId", truckSizeId);
+    }
+
+    if (zoneId) {
+      params.append("zoneId", zoneId);
+    }
+
+    if (fuelId) {
+      params.append("fuelId", fuelId);
+    }
+
+    if (warehouseId) {
+      params.append("warehouseId", warehouseId);
+    }
+
+    if (truckOwnershipTypeId) {
+      params.append("truckOwnershipTypeId", truckOwnershipTypeId);
     }
 
     const res = await apiRequest("GET", `/truck?${params.toString()}`);
@@ -188,8 +185,8 @@ export const createTruck = async (data: Truck) => {
       zoneId: data.zoneId,
       warehouseId: data.warehouseId,
       fuelId: data.fuelId,
-      driver: [2],
-      assistant: [3],
+      driver: data.TruckDriver,
+      assistant: data.TruckAssistant,
       truckOwnershipTypeId: data.truckOwnershipTypeId,
     });
     return res;
@@ -209,6 +206,7 @@ export const deleteTruck = async (id: number) => {
 
 export const updateTruck = async (data: Truck) => {
   try {
+    console.log(data.TruckDriver);
     const res = await apiRequest("PATCH", `/truck/${data.id}`, {
       licensePlate: data.licensePlate,
       functioning: data.functioning,
@@ -218,8 +216,8 @@ export const updateTruck = async (data: Truck) => {
       zoneId: data.zoneId,
       warehouseId: data.warehouseId,
       fuelId: data.fuelId,
-      driver: [2],
-      assistant: [3],
+      driver: data.TruckDriver,
+      assistant: data.TruckAssistant,
       truckOwnershipTypeId: data.truckOwnershipTypeId,
     });
     return res;

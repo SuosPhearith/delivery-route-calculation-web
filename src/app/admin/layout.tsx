@@ -9,15 +9,15 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  // useEffect(() => {
-  //   const validateRole = async () => {
-  //     const roleId = await apiRole();
-  //     if (roleId !== Roles.admin) {
-  //       window.location.href = "/auth/signin";
-  //     }
-  //   };
-  //   validateRole();
-  // }, []);
+  useEffect(() => {
+    const validateRole = async () => {
+      const role = await apiRole();
+      if (role !== Roles.ADMIN) {
+        window.location.href = "/auth/signin";
+      }
+    };
+    validateRole();
+  }, []);
   return <DefaultLayout>{children}</DefaultLayout>;
 };
 

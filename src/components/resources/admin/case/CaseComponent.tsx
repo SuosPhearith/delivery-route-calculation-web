@@ -17,6 +17,7 @@ import { message, Modal, notification, Popconfirm } from "antd";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { FaRegTrashCan } from "react-icons/fa6";
 import { FaRegEdit } from "react-icons/fa";
+import TableSeleton from "../../components/TableSeleton";
 
 const CaseComponent = () => {
   const router = useRouter();
@@ -152,9 +153,9 @@ const CaseComponent = () => {
     setLimit(selectedLimit);
   }, [selectedPage, selectedLimit]);
 
-  if (isLoading) {
-    return <Skeleton />;
-  }
+  // if (isLoading) {
+  //   return <Skeleton />;
+  // }
   if (isError) {
     return <div>Something happened</div>;
   }
@@ -182,139 +183,142 @@ const CaseComponent = () => {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-x-3">
-          <button
-            onClick={showModal}
-            className="flex shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary px-5 py-2 text-sm tracking-wide text-white transition-colors duration-200 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500"
-          >
-            <LuPlusCircle size={20} />
-            <span>Add case</span>
-          </button>
+        <div
+          title="Create"
+          className="flex cursor-pointer justify-center rounded-md bg-primary p-1"
+        >
+          <LuPlusCircle color="white" size={20} onClick={showModal} />
         </div>
       </div>
-      <div className="mt-3 flex flex-col">
-        <div className="-mx-4 -overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-            <div className="overflow-hidden border border-gray-200 dark:border-gray-700 md:rounded-lg">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-800">
-                  <tr>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      <button className="flex items-center gap-x-3 focus:outline-none">
-                        NO.
-                      </button>
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Case Name
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Case length
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Case width
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Case height
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Case cubic
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                    >
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                {data?.data.map((item, index) => (
-                  <tbody
-                    className="divide-y divide-gray-200 bg-white hover:bg-slate-100 dark:divide-gray-700 dark:bg-gray-900"
-                    key={item.id}
-                  >
+      {isLoading ? (
+        <div>
+          <TableSeleton />
+        </div>
+      ) : (
+        <div className="mt-3 flex flex-col">
+          <div className="-mx-4 -overflow-x-auto sm:-mx-6 lg:-mx-8">
+            <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+              <div className="overflow-hidden border border-gray-200 dark:border-gray-700 md:rounded-lg">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {(page - 1) * limit + index + 1}
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.name}
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.caseLenght} m
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.caseWidth} m
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.caseHeight} m
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="text-black dark:text-gray-200">
-                          {item.caseCubic} m³
-                        </h4>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
-                        <h4 className="flex text-black dark:text-gray-200">
-                          <FaRegEdit
-                            size={18}
-                            color="blue"
-                            className="mx-1 cursor-pointer"
-                            title="Edit item"
-                            onClick={() => handleEdit(item)}
-                          />
-                          <Popconfirm
-                            title="Delete"
-                            description="Are you sure to delete?"
-                            okText="Yes"
-                            cancelText="No"
-                            onConfirm={() => handleDelete(item?.id || 0)}
-                          >
-                            <FaRegTrashCan
-                              size={18}
-                              color="red"
-                              className="mx-1 cursor-pointer"
-                              title="Delete item"
-                            />
-                          </Popconfirm>
-                        </h4>
-                      </td>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        <button className="flex items-center gap-x-3 focus:outline-none">
+                          NO.
+                        </button>
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Case Name
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Case length
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Case width
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Case height
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Case cubic
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Action
+                      </th>
                     </tr>
-                    {/* Additional rows here */}
-                  </tbody>
-                ))}
-              </table>
+                  </thead>
+                  {data?.data.map((item, index) => (
+                    <tbody
+                      className="divide-y divide-gray-200 bg-white hover:bg-slate-100 dark:divide-gray-700 dark:bg-gray-900"
+                      key={item.id}
+                    >
+                      <tr>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {(page - 1) * limit + index + 1}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.name}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.caseLenght} m
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.caseWidth} m
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.caseHeight} m
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            {item.caseCubic} m³
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="flex text-black dark:text-gray-200">
+                            <FaRegEdit
+                              size={18}
+                              color="blue"
+                              className="mx-1 cursor-pointer"
+                              title="Edit item"
+                              onClick={() => handleEdit(item)}
+                            />
+                            <Popconfirm
+                              title="Delete"
+                              description="Are you sure to delete?"
+                              okText="Yes"
+                              cancelText="No"
+                              onConfirm={() => handleDelete(item?.id || 0)}
+                            >
+                              <FaRegTrashCan
+                                size={18}
+                                color="red"
+                                className="mx-1 cursor-pointer"
+                                title="Delete item"
+                              />
+                            </Popconfirm>
+                          </h4>
+                        </td>
+                      </tr>
+                      {/* Additional rows here */}
+                    </tbody>
+                  ))}
+                </table>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
       <div className="mt-6 sm:flex sm:items-center sm:justify-between">
         <div className="text-sm text-gray-500 dark:text-gray-400">
           Page
