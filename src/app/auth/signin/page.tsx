@@ -2,12 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { FaInfoCircle } from "react-icons/fa";
-import { TbLogin } from "react-icons/tb";
 import { useRouter } from "next/navigation";
-import { message } from "antd";
 import axios from "axios";
-import saveToken, { getAccessToken } from "@/services/saveToken";
+import saveToken from "@/services/saveToken";
 import Roles from "@/utils/Roles.enum";
+import Image from "next/image";
 const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 type Inputs = {
@@ -17,25 +16,32 @@ type Inputs = {
 
 const SignIn = () => {
   const [errorMessage, setErrorMessage] = useState("");
+  const [isPending, setIsPending] = useState(false);
   const route = useRouter();
 
   const signIn = async (data: { email: string; password: string }) => {
     try {
+      setIsPending(true);
       const response = await axios.post(`${baseUrl}/keycloak/auth/signin`, {
         email: data.email,
         password: data.password,
       });
+      console.log(response.data);
       const responseData: LoginResponse = response.data;
       saveToken(
         responseData.access_token,
         responseData.refresh_token,
         responseData.role,
       );
+      window.localStorage.setItem("name", responseData.name);
+      window.localStorage.setItem("email", responseData.email);
       if (responseData.role === Roles.ADMIN) {
         route.push("/admin");
       }
     } catch (error: any) {
       setErrorMessage(error.response.data.message);
+    } finally {
+      setIsPending(false);
     }
   };
 
@@ -50,63 +56,76 @@ const SignIn = () => {
   };
 
   return (
-    <div className="mx-auto my-10 max-w-lg rounded-xl bg-white p-8 shadow shadow-slate-300">
-      <div className="w-full text-center">
-        <h1 className="text-4xl font-medium">Login</h1>
-        <p className="text-slate-500">Hi, Welcome back 👋</p>
-      </div>
-      {errorMessage && (
-        <div className="w-full">
-          <div className="mb-4 mt-5 flex rounded-lg bg-red-100 p-4 text-sm text-red-700">
-            <FaInfoCircle size={20} className="mx-2" />
-            <div>{errorMessage}</div>
+    <div className="flex min-h-screen justify-center bg-gray-100 text-gray-900">
+      <div className="m-0 flex max-w-screen-xl flex-1 justify-center bg-white shadow sm:m-10 sm:rounded-lg">
+        <div className="h-full p-6 sm:p-12 lg:w-1/2 xl:w-5/12">
+          <div className="flex h-full flex-col items-center justify-center">
+            <Image
+              width={82}
+              height={82}
+              src={"/images/logo/logo-icon.svg"}
+              alt="Logo"
+            />
+            <h1 className=" mb-10 text-2xl font-extrabold text-primary xl:text-3xl">
+              D.R.C
+            </h1>
+            {errorMessage && (
+              <div className="w-full">
+                <div className="mb-4 mt-5 flex rounded-lg bg-red-100 p-4 text-sm text-red-700">
+                  <FaInfoCircle size={20} className="mx-2" />
+                  <div>{errorMessage}</div>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="mt-8 w-full flex-1">
+                <div className="mx-auto">
+                  <input
+                    {...register("email", { required: true })}
+                    className="w-full rounded-lg border border-gray-200 bg-gray-100 px-8 py-4 text-sm font-medium placeholder-gray-500 focus:border-gray-400 focus:bg-white focus:outline-none"
+                    type="email"
+                    placeholder="Email"
+                  />
+                  {errors.email && (
+                    <span className="text-sm text-red-800">
+                      Please input valid email.
+                    </span>
+                  )}
+                  <input
+                    {...register("password", { required: true, minLength: 6 })}
+                    className="mt-5 w-full rounded-lg border border-gray-200 bg-gray-100 px-8 py-4 text-sm font-medium placeholder-gray-500 focus:border-gray-400 focus:bg-white focus:outline-none"
+                    type="password"
+                    placeholder="Password"
+                  />
+                  {errors.password && (
+                    <span className="text-sm text-red-800">
+                      Password must be at least 6 characters long.
+                    </span>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={isPending}
+                    className="focus:shadow-outline mt-5 flex w-full items-center justify-center rounded-lg bg-indigo-500 py-4 font-semibold tracking-wide text-gray-100 transition-all duration-300 ease-in-out hover:bg-indigo-700 focus:outline-none"
+                  >
+                    <span className="ml-3">Sign In</span>
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
-      )}
-      <div className="my-5"></div>
-      <form onSubmit={handleSubmit(onSubmit)} className="my-10">
-        <div className="flex flex-col space-y-5">
-          <label htmlFor="email">
-            <p className="pb-2 font-medium text-slate-700">Email address</p>
-            <input
-              {...register("email", { required: true })}
-              id="email"
-              name="email"
-              type="email"
-              className="w-full rounded-lg border border-slate-200 px-3 py-3 hover:shadow focus:border-slate-500 focus:outline-none"
-              placeholder="Enter email address"
+        <div className="hidden h-full flex-1 bg-indigo-100 text-center lg:flex lg:items-center lg:justify-center">
+          <div className="m-12 w-full bg-contain bg-center bg-no-repeat xl:m-16 xl:ms-40">
+            <Image
+              width={500}
+              height={500}
+              src={"/images/dashboard.svg"}
+              alt="Logo"
             />
-            {errors.email && (
-              <span className="text-sm text-red-800">
-                Please input valid email.
-              </span>
-            )}
-          </label>
-          <label htmlFor="password">
-            <p className="pb-2 font-medium text-slate-700">Password</p>
-            <input
-              {...register("password", { required: true, minLength: 6 })}
-              id="password"
-              name="password"
-              type="password"
-              className="w-full rounded-lg border border-slate-200 px-3 py-3 hover:shadow focus:border-slate-500 focus:outline-none"
-              placeholder="Enter your password"
-            />
-            {errors.password && (
-              <span className="text-sm text-red-800">
-                Password must be at least 6 characters long.
-              </span>
-            )}
-          </label>
-          <button
-            type="submit"
-            className="inline-flex w-full items-center justify-center space-x-2 rounded-lg border-indigo-500 bg-indigo-600 py-3 font-medium text-white hover:bg-indigo-500 hover:shadow"
-          >
-            <TbLogin size={25} />
-            <span>Login</span>
-          </button>
+          </div>
         </div>
-      </form>
+      </div>
     </div>
   );
 };
@@ -117,4 +136,6 @@ type LoginResponse = {
   access_token: string;
   refresh_token: string;
   role: string;
+  name: string;
+  email: string;
 };

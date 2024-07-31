@@ -14,6 +14,11 @@ export interface Warehouse {
   lat: number;
   long: number;
   information: string;
+  _count?: TotalTrucks;
+}
+
+export interface TotalTrucks {
+  Truck: string;
 }
 
 export const getAllWarehouse = async (

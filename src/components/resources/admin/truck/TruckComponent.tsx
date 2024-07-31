@@ -1,6 +1,7 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Drawer,
   Input,
   message,
   Modal,
@@ -38,10 +39,12 @@ import {
   Truck,
   updateTruck,
 } from "@/api/truck";
-import { TbUsers } from "react-icons/tb";
+import { TbUser, TbUsers } from "react-icons/tb";
 import { findAllOfficerControll } from "@/api/zone";
 import { GrPowerReset } from "react-icons/gr";
 import TableSeleton from "../../components/TableSeleton";
+import { FiUsers } from "react-icons/fi";
+import { GoDot } from "react-icons/go";
 
 const TruckComponent = () => {
   const router = useRouter();
@@ -173,6 +176,22 @@ const TruckComponent = () => {
     setIsModalOpen(false);
   };
   // end modal
+
+  // drawer
+  const [driverData, setDriverData] = useState<any[]>([]);
+  const [assistantData, setAssistantData] = useState<any[]>([]);
+  const [open, setOpen] = useState(false);
+
+  const showDrawer = (TruckDriver: any, TruckAssistant: any) => {
+    setDriverData(TruckDriver);
+    setAssistantData(TruckAssistant);
+    setOpen(true);
+  };
+
+  const onClose = () => {
+    setOpen(false);
+  };
+  // end drawer
 
   // delete
   const { mutateAsync: deleteMutate, isPending: isPendingDelete } = useMutation(
@@ -372,12 +391,12 @@ const TruckComponent = () => {
           <LuPlusCircle color="white" size={20} onClick={showModal} />
         </div>
       </div>
-      <div className=" md:flex md:items-center md:justify-between">
+      <div className="md:flex md:flex-wrap md:items-center md:justify-between">
         <div className="flex flex-col ">
           <p className="me-1 text-xs">Status:</p>
           <Select
             showSearch
-            style={{ width: 150 }}
+            className="w-[150px] max-[770px]:w-full"
             defaultValue=""
             value={status}
             optionFilterProp="label"
@@ -406,7 +425,8 @@ const TruckComponent = () => {
           <p className="me-1 text-xs">Size:</p>
           <Select
             showSearch
-            style={{ width: 100 }}
+            className="w-[100px] max-[770px]:w-full"
+            // style={{ width: 100 }}
             defaultValue=""
             value={truckSizeId}
             optionFilterProp="label"
@@ -418,7 +438,8 @@ const TruckComponent = () => {
           <p className="me-1 text-xs">Zone:</p>
           <Select
             showSearch
-            style={{ width: 200 }}
+            className="w-[200px] max-[770px]:w-full"
+            // style={{ width: 200 }}
             defaultValue=""
             value={zoneId}
             optionFilterProp="label"
@@ -430,7 +451,8 @@ const TruckComponent = () => {
           <p className="me-1 text-xs">Fuel:</p>
           <Select
             showSearch
-            style={{ width: 150 }}
+            className="w-[150px] max-[770px]:w-full"
+            // style={{ width: 150 }}
             defaultValue=""
             value={fuelId}
             optionFilterProp="label"
@@ -442,7 +464,8 @@ const TruckComponent = () => {
           <p className="me-1 text-xs">Warehouse:</p>
           <Select
             showSearch
-            style={{ width: 150 }}
+            className="w-[150px] max-[770px]:w-full"
+            // style={{ width: 150 }}
             defaultValue=""
             value={warehouseId}
             optionFilterProp="label"
@@ -454,7 +477,8 @@ const TruckComponent = () => {
           <p className="me-1 text-xs">Ownership:</p>
           <Select
             showSearch
-            style={{ width: 150 }}
+            className="w-[150px] max-[770px]:w-full"
+            // style={{ width: 150 }}
             defaultValue=""
             value={truckOwnershipTypeId}
             optionFilterProp="label"
@@ -478,7 +502,8 @@ const TruckComponent = () => {
         <div className="flex flex-col">
           <p className="me-1 text-xs">.</p>
           <Input
-            style={{ width: 250 }}
+            className="w-[250px] max-[770px]:w-full"
+            // style={{ width: 250 }}
             prefix={<LuSearch />}
             onChange={handleChangeSearch}
             value={search ? search : query}
@@ -588,7 +613,10 @@ const TruckComponent = () => {
                           </h4>
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
-                          <h4 className="text-black dark:text-gray-200">
+                          <h4
+                            onClick={() => setQuery(item.licensePlate)}
+                            className="cursor-pointer text-yellow-600 dark:text-gray-200"
+                          >
                             {item.licensePlate}
                           </h4>
                         </td>
@@ -608,14 +636,24 @@ const TruckComponent = () => {
                           </h4>
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
-                          <h4 className="text-black dark:text-gray-200">
-                            {item.zone?.code}
-                          </h4>
+                          <Link
+                            href={`/admin/zone?query=${item.zone?.code}`}
+                            className="text-black dark:text-gray-200"
+                          >
+                            <span className="text-blue-700 hover:underline">
+                              {item.zone?.code}
+                            </span>
+                          </Link>
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
-                          <h4 className="text-black dark:text-gray-200">
-                            {item.warehouse?.name}
-                          </h4>
+                          <Link
+                            href={`/admin/warehouse?query=${item.warehouse?.name}`}
+                            className="text-black dark:text-gray-200"
+                          >
+                            <span className="text-green-800 hover:underline">
+                              {item.warehouse?.name}
+                            </span>
+                          </Link>
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
                           <h4 className="text-black dark:text-gray-200">
@@ -633,7 +671,9 @@ const TruckComponent = () => {
                           </h4>
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
-                          <h4 className="text-black dark:text-gray-200">
+                          <h4
+                            className={` dark:text-gray-200 ${item.status === "AVAILABLE" ? "text-primary" : item.status === "IN_USE" ? "text-yellow-700" : item.status === "MAINTENANCE" ? "text-red" : ""}`}
+                          >
                             {item.status}
                           </h4>
                         </td>
@@ -641,6 +681,12 @@ const TruckComponent = () => {
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
                           <h4 className="flex text-black dark:text-gray-200">
                             <TbUsers
+                              onClick={() =>
+                                showDrawer(
+                                  item.TruckDriver,
+                                  item.TruckAssistant,
+                                )
+                              }
                               size={18}
                               className="mx-1 cursor-pointer"
                               title="view driver and assistant"
@@ -1021,6 +1067,54 @@ const TruckComponent = () => {
           </div>
         </form>
       </Modal>
+      <Drawer title="Driver and Assistant" onClose={onClose} open={open}>
+        <div className="">
+          <div className="flex items-center border-b-[1px] border-slate-600">
+            <FiUsers size={20} className="text-slate-600" />
+            <div className="ms-2 text-lg text-slate-600">Driver:</div>
+          </div>
+          {driverData?.map((item, index) => (
+            <div
+              key={item?.driver.id}
+              className="my-2 flex items-center justify-between"
+            >
+              <div className="flex items-center">
+                <div className="text-md ms-2 w-[20px]">{index + 1}.</div>
+                <div className="text-md ms-2">{item?.driver.name}</div>
+                <div className="text-md ms-2 text-green-700">
+                  ({item?.driver.email})
+                </div>
+              </div>
+              <Link href={`/admin/driver?query=${item.driver.email}`}>
+                <FaRegEye size={16} color="blue" className="cursor-pointer" />
+              </Link>
+            </div>
+          ))}
+        </div>
+        <div className="mt-10">
+          <div className="flex items-center border-b-[1px] border-slate-600">
+            <FiUsers size={20} className="text-slate-600" />
+            <div className="ms-2 text-lg text-slate-600">Assistant:</div>
+          </div>
+          {assistantData?.map((item, index) => (
+            <div
+              key={item.assistant.id}
+              className="my-2 flex items-center justify-between"
+            >
+              <div className="flex items-center">
+                <div className="text-md ms-2 w-[20px]">{index + 1}.</div>
+                <div className="text-md ms-2">{item.assistant.name}</div>
+                <div className="text-md ms-2 text-green-700">
+                  ({item.assistant.email})
+                </div>
+              </div>
+              <Link href={`/admin/assistant?query=${item.assistant.email}`}>
+                <FaRegEye size={16} color="blue" className="cursor-pointer" />
+              </Link>
+            </div>
+          ))}
+        </div>
+      </Drawer>
     </section>
   );
 };

@@ -23,16 +23,18 @@ import Skeleton from "../../components/Skeleton";
 import Link from "next/link";
 import { SubmitHandler, useForm } from "react-hook-form";
 import TableSeleton from "../../components/TableSeleton";
+import { BsTruck } from "react-icons/bs";
 
 const WarehouseComponent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedPage = Number(searchParams.get("page")) || 1;
   const selectedLimit = Number(searchParams.get("limit")) || 10;
+  const selectedQuery = searchParams.get("query") || "";
   const [page, setPage] = useState(selectedPage);
   const [limit, setLimit] = useState(selectedLimit);
   const [search, setSearch] = useState("");
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(selectedQuery);
   const queryClient = useQueryClient();
   const [api, contextHolder] = notification.useNotification();
 
@@ -181,6 +183,7 @@ const WarehouseComponent = () => {
   const handleSearch = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       setQuery(search);
+      router.push("warehouse");
     }
   };
   const handleChangeSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -188,6 +191,7 @@ const WarehouseComponent = () => {
     setSearch(value);
     if (value.trim() === "") {
       setQuery("");
+      router.push("warehouse");
     }
   };
   // end fectch
@@ -216,7 +220,7 @@ const WarehouseComponent = () => {
       <div className="mt-3 md:flex md:items-center md:justify-end">
         <div className="flex flex-col ">
           <Input
-            style={{ width: 250 }}
+            className="w-[250px] max-[770px]:w-full"
             prefix={<LuSearch />}
             onChange={handleChangeSearch}
             value={search ? search : query}
@@ -274,6 +278,12 @@ const WarehouseComponent = () => {
                         scope="col"
                         className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
                       >
+                        Total Truck
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
                         Action
                       </th>
                     </tr>
@@ -307,6 +317,12 @@ const WarehouseComponent = () => {
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
                           <h4 className="... w-[300px] truncate text-black dark:text-gray-200">
                             {item.information}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="flex items-center text-black dark:text-gray-200">
+                            <span className="me-2">{item._count?.Truck}</span>{" "}
+                            <BsTruck />
                           </h4>
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
@@ -385,7 +401,7 @@ const WarehouseComponent = () => {
         open={isModalOpen}
         onOk={handleOk}
         onCancel={handleCancel}
-        closable={false}
+        maskClosable={false}
         footer
       >
         <form onSubmit={handleSubmit(onSubmit)}>

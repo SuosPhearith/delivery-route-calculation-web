@@ -14,10 +14,11 @@ const DriverComponent = () => {
   const searchParams = useSearchParams();
   const selectedPage = Number(searchParams.get("page")) || 1;
   const selectedLimit = Number(searchParams.get("limit")) || 10;
+  const selectedQuery = searchParams.get("query") || "";
   const [page, setPage] = useState(selectedPage);
   const [limit, setLimit] = useState(selectedLimit);
   const [status, setStatus] = useState<Status | "">("");
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(selectedQuery);
   const [search, setSearch] = useState("");
   const { data, isError, isLoading } = useQuery({
     queryKey: ["drivers", page, limit, status, query],
@@ -43,6 +44,7 @@ const DriverComponent = () => {
   const handleSearch = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       setQuery(search);
+      router.push("driver");
     }
   };
   const handleChangeSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,6 +52,7 @@ const DriverComponent = () => {
     setSearch(value);
     if (value.trim() === "") {
       setQuery("");
+      router.push("driver");
     }
   };
   return (
@@ -100,7 +103,7 @@ const DriverComponent = () => {
           </span>
           <input
             onChange={handleChangeSearch}
-            value={search}
+            value={search ? search : query}
             onKeyDown={handleSearch}
             type="text"
             placeholder="Search"

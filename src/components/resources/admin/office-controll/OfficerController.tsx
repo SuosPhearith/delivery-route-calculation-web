@@ -222,7 +222,7 @@ const OfficerController = () => {
         <div className="flex flex-col">
           <p className="me-1 text-xs">.</p>
           <Input
-            style={{ width: 250 }}
+            className="w-[250px] max-[770px]:w-full"
             prefix={<LuSearch />}
             onChange={handleChangeSearch}
             value={search ? search : query}
@@ -389,7 +389,7 @@ const OfficerController = () => {
         open={isModalOpen}
         onOk={handleOk}
         onCancel={handleCancel}
-        closable={false}
+        maskClosable={false}
         footer
       >
         <form onSubmit={handleSubmit(onSubmit)}>

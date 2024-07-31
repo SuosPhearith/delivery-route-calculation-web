@@ -204,7 +204,7 @@ const SizeComponent = () => {
         </div>
       ) : (
         <div className="flex flex-col">
-          <div className="-mx-4 -overflow-x-auto sm:-mx-6 lg:-mx-8">
+          <div className="overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
               <div className="overflow-hidden border border-gray-200 dark:border-gray-700 md:rounded-lg">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -381,7 +381,7 @@ const SizeComponent = () => {
         open={isModalOpen}
         onOk={handleOk}
         onCancel={handleCancel}
-        closable={false}
+        maskClosable={false}
         footer
       >
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -405,6 +405,7 @@ const SizeComponent = () => {
           <input
             {...register("containerLenght", { required: true })}
             type="number"
+            step="any"
             placeholder="Container length"
             className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 "
           />
@@ -419,6 +420,7 @@ const SizeComponent = () => {
           <input
             {...register("containerWidth", { required: true })}
             type="number"
+            step="any"
             placeholder="Container width"
             className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 "
           />
@@ -433,6 +435,7 @@ const SizeComponent = () => {
           <input
             {...register("containerHeight", { required: true })}
             type="number"
+            step="any"
             placeholder="Container height"
             className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 "
           />

@@ -1,38 +1,3 @@
-// "use client";
-// import { errorResponse } from "@/types/error";
-// import axios, { Method } from "axios";
-// const baseUrl = process.env.NEXT_PUBLIC_API_URL;
-// const apiRequest = async (
-//   method: Method,
-//   url: string,
-//   data?: any,
-//   withCredentials: boolean = true,
-// ) => {
-//   const endPoint = `${baseUrl}${url}`;
-//   try {
-//     const response = await axios({
-//       method,
-//       url: endPoint,
-//       data,
-//       withCredentials,
-//     });
-//     return response.data;
-//   } catch (error: any) {
-//     const errorMsg =
-//       (error as errorResponse)?.response?.data?.message ??
-//       "An unexpected error occurred";
-//     const errorCode =
-//       (error as errorResponse)?.response?.data?.statusCode ??
-//       "An unexpected error occurred";
-//     if (errorCode === 401 || errorCode === 403) {
-//       window.location.href = "/auth/signin";
-//     }
-//     throw errorMsg;
-//   }
-// };
-
-// export default apiRequest;
-
 //::================================>>Third party<<=================================::
 import axios from "axios";
 //::================================================================================::
@@ -46,7 +11,6 @@ import {
 } from "./saveToken";
 import logoutAPI from "./logout";
 import { errorResponse } from "@/types/error";
-// import { message } from "antd";
 //::================================================================================::
 
 //::==>> get base url from .env
@@ -60,10 +24,9 @@ async function apiRequest(
   retry = false,
 ) {
   //:: validate
-  const isAccessToken = getAccessToken();
   const isRefreshToken = getRefreshToken();
   const isRole = getRole();
-  if (!isAccessToken || !isRefreshToken || !isRole) {
+  if (!isRefreshToken || !isRole) {
     return logoutAPI();
   }
   //::==>> get accessToken from localstorage for make request
@@ -122,10 +85,10 @@ async function refreshToken() {
     //::==>> make request to get new accessToken by using refreshToken
     const newToken = await axios.post(`${baseUrl}/keycloak/auth/refresh`, {
       //::==>> get refreshToken from localstorage
-      refreshToken: getRefreshToken(),
+      token: getRefreshToken(),
     });
     //::==>> if response Ok we store new accessToken and new refreshToken
-    saveToken(newToken.data.accessToken, newToken.data.refreshToken);
+    saveToken(newToken.data.access_token, newToken.data.refresh_token);
   } catch (error) {
     //::==>> if throw error system will auto logout
     logoutAPI();

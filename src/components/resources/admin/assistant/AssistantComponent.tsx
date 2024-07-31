@@ -14,10 +14,11 @@ const AssistantComponent = () => {
   const searchParams = useSearchParams();
   const selectedPage = Number(searchParams.get("page")) || 1;
   const selectedLimit = Number(searchParams.get("limit")) || 10;
+  const selectedQuery = searchParams.get("query") || "";
   const [page, setPage] = useState(selectedPage);
   const [limit, setLimit] = useState(selectedLimit);
   const [status, setStatus] = useState<Status | "">("");
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(selectedQuery);
   const [search, setSearch] = useState("");
   const { data, isError, isLoading } = useQuery({
     queryKey: ["drivers", page, limit, status, query],
@@ -43,6 +44,7 @@ const AssistantComponent = () => {
   const handleSearch = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       setQuery(search);
+      router.push("assistant");
     }
   };
   const handleChangeSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,6 +52,7 @@ const AssistantComponent = () => {
     setSearch(value);
     if (value.trim() === "") {
       setQuery("");
+      router.push("assistant");
     }
   };
   return (
@@ -100,13 +103,12 @@ const AssistantComponent = () => {
           </span>
           <input
             onChange={handleChangeSearch}
-            value={search}
+            value={search ? search : query}
             onKeyDown={handleSearch}
             type="text"
             placeholder="Search"
             className="block w-full rounded-md border border-gray-200 bg-white py-1.5 pl-11 pr-5 text-gray-700 placeholder-gray-400/70 focus:border-primary focus:outline-none focus:ring-blue-300 focus:ring-opacity-40 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-blue-300 md:w-80 rtl:pl-5 rtl:pr-11"
           />
-          {/* <button onClick={() => handleSearch()}>Search</button> */}
         </div>
       </div>
       {isLoading ? (

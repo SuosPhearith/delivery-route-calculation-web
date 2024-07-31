@@ -24,6 +24,7 @@ import {
   Zone,
 } from "@/api/zone";
 import TableSeleton from "../../components/TableSeleton";
+import { BsTruck } from "react-icons/bs";
 
 const ZoneComponent = () => {
   const router = useRouter();
@@ -227,7 +228,7 @@ const ZoneComponent = () => {
         <div className="flex flex-col">
           <p className="me-1 text-xs">.</p>
           <Input
-            style={{ width: 250 }}
+            className="w-[250px] max-[770px]:w-full"
             prefix={<LuSearch />}
             onChange={handleChangeSearch}
             value={search ? search : query}
@@ -269,12 +270,7 @@ const ZoneComponent = () => {
                       >
                         Name
                       </th>
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
-                      >
-                        Total Trucks
-                      </th>
+
                       <th
                         scope="col"
                         className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
@@ -286,6 +282,12 @@ const ZoneComponent = () => {
                         className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
                       >
                         Description
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
+                        Total Trucks
                       </th>
                       <th
                         scope="col"
@@ -316,11 +318,7 @@ const ZoneComponent = () => {
                             {item.name}
                           </h4>
                         </td>
-                        <td className="whitespace-nowrap px-4 py-3 text-sm">
-                          <h4 className="text-black dark:text-gray-200">
-                            {item.Truck?.length}
-                          </h4>
-                        </td>
+
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
                           <Link
                             href={`/admin/controll?query=${item.officerControll?.name}`}
@@ -334,6 +332,12 @@ const ZoneComponent = () => {
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
                           <h4 className="... w-[300px] truncate text-black dark:text-gray-200">
                             {item.description}
+                          </h4>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <h4 className="flex items-center text-black dark:text-gray-200">
+                            <span className="me-2">{item.Truck?.length}</span>{" "}
+                            <BsTruck />
                           </h4>
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
@@ -412,7 +416,7 @@ const ZoneComponent = () => {
         open={isModalOpen}
         onOk={handleOk}
         onCancel={handleCancel}
-        closable={false}
+        maskClosable={false}
         footer
       >
         <form onSubmit={handleSubmit(onSubmit)}>
