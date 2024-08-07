@@ -1,6 +1,7 @@
 "use client";
 import DefaultLayout from "@/components/Layouts/DefaultLaout";
 import apiRole from "@/services/apiRole";
+import { Languages } from "@/translations";
 import Roles from "@/utils/Roles.enum";
 import React, { ReactNode, useEffect } from "react";
 
@@ -16,6 +17,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         window.location.href = "/auth/signin";
       }
     };
+    const defaultLang = localStorage.getItem("lang");
+    if (!defaultLang) {
+      localStorage.setItem("lang", Languages.EN);
+    }
     validateRole();
   }, []);
   return <DefaultLayout>{children}</DefaultLayout>;

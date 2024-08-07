@@ -1,7 +1,13 @@
 "use client";
 import React, { useState, ReactNode } from "react";
-import Sidebar from "@/components/Sidebar";
+// import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
+import dynamic from "next/dynamic";
+
+// Dynamically import Map component with no SSR
+const Sidebar = dynamic(() => import("../Sidebar/index"), {
+  ssr: false,
+});
 
 export default function DefaultLayout({
   children,

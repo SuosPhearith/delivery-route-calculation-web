@@ -1,0 +1,21 @@
+/* components/LanguageSwitcher.module.css */
+.languageSwitcher {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .flag {
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+  }
+  
+  .flag:hover,
+  .flag.active {
+    opacity: 1;
+  }
+  
+  .image {
+    display: block;
+  }
+  

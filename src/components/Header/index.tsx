@@ -4,6 +4,7 @@ import DropdownNotification from "./DropdownNotification";
 import DropdownUser from "./DropdownUser";
 import Image from "next/image";
 import SearchForm from "@/components/Header/SearchForm";
+import LanguageSwitcher from "../resources/components/LanguageSwitcher";
 
 const Header = (props: {
   sidebarOpen: string | boolean | undefined;
@@ -74,6 +75,8 @@ const Header = (props: {
             <DarkModeSwitcher />
             {/* <!-- Dark Mode Toggle --> */}
           </ul>
+
+          <LanguageSwitcher />
 
           {/* <!-- User Area --> */}
           <DropdownUser />

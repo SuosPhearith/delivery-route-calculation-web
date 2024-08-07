@@ -1,7 +1,12 @@
+import RouteComponent from "@/components/resources/admin/route/RouteComponent";
 import React from "react";
 
 const page = () => {
-  return <div>In developing</div>;
+  return (
+    <main>
+      <RouteComponent />
+    </main>
+  );
 };
 
 export default page;

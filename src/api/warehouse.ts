@@ -44,7 +44,6 @@ export const getAllWarehouse = async (
 };
 
 export const createWarehouse = async (data: Warehouse) => {
-  console.log(data);
   try {
     const { name, lat, long, information } = data;
     return await apiRequest("POST", "/warehouse", {

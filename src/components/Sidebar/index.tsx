@@ -1,18 +1,19 @@
 "use client";
-
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import SidebarItem from "@/components/Sidebar/SidebarItem";
 import ClickOutside from "@/components/ClickOutside";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import { BsGrid, BsTruck, BsGear } from "react-icons/bs";
-import { VscAccount } from "react-icons/vsc";
 import { FiMapPin } from "react-icons/fi";
 import { BsBoxSeam } from "react-icons/bs";
-import { FiUsers } from "react-icons/fi";
 import { GiSteeringWheel } from "react-icons/gi";
 import { LiaWarehouseSolid } from "react-icons/lia";
 import { PiBuildingOffice } from "react-icons/pi";
+import { MdOutlineDirections } from "react-icons/md";
+import { Languages, TRANSLATIONS } from "@/translations";
+
+const lang = window.localStorage.getItem("lang") || Languages.EN;
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -24,17 +25,26 @@ const menuGroups = [
     menuItems: [
       {
         icon: <BsGrid size={20} />,
-        label: "Dashboard",
+        label:
+          lang === Languages.KH
+            ? TRANSLATIONS[Languages.KH].dashboard
+            : TRANSLATIONS[Languages.EN].dashboard,
         route: "/admin",
       },
       {
         icon: <FiMapPin size={20} />,
-        label: "Route",
+        label:
+          lang === Languages.KH
+            ? TRANSLATIONS[Languages.KH].route
+            : TRANSLATIONS[Languages.EN].route,
         route: "/admin/route",
       },
       {
         icon: <BsTruck size={20} />,
-        label: "Truck",
+        label:
+          lang === Languages.KH
+            ? TRANSLATIONS[Languages.KH].truck
+            : TRANSLATIONS[Languages.EN].truck,
         route: "#",
         children: [
           { label: "Truck", route: "/admin/truck" },
@@ -45,12 +55,18 @@ const menuGroups = [
       },
       {
         icon: <LiaWarehouseSolid size={20} />,
-        label: "Warehouse",
+        label:
+          lang === Languages.KH
+            ? TRANSLATIONS[Languages.KH].warehouse
+            : TRANSLATIONS[Languages.EN].warehouse,
         route: "/admin/warehouse",
       },
       {
         icon: <PiBuildingOffice size={20} />,
-        label: "Office",
+        label:
+          lang === Languages.KH
+            ? TRANSLATIONS[Languages.KH].office
+            : TRANSLATIONS[Languages.EN].office,
         route: "#",
         children: [
           { label: "Controll", route: "/admin/controll" },
@@ -59,12 +75,18 @@ const menuGroups = [
       },
       {
         icon: <BsBoxSeam size={20} />,
-        label: "Case",
+        label:
+          lang === Languages.KH
+            ? TRANSLATIONS[Languages.KH].case
+            : TRANSLATIONS[Languages.EN].case,
         route: "/admin/case",
       },
       {
         icon: <GiSteeringWheel size={20} />,
-        label: "Driver",
+        label:
+          lang === Languages.KH
+            ? TRANSLATIONS[Languages.KH].driver
+            : TRANSLATIONS[Languages.EN].driver,
         route: "#",
         children: [
           { label: "Driver", route: "/admin/driver" },
@@ -72,32 +94,38 @@ const menuGroups = [
           { label: "License", route: "/admin/license" },
         ],
       },
-      // {
-      //   icon: <FiUsers size={20} />,
-      //   label: "User",
-      //   route: "/admin/user",
-      // },
+      {
+        icon: <MdOutlineDirections size={20} />,
+        label:
+          lang === Languages.KH
+            ? TRANSLATIONS[Languages.KH].direction
+            : TRANSLATIONS[Languages.EN].direction,
+        route: "/admin/direction",
+      },
       {
         icon: <BsGear size={20} />,
-        label: "System",
+        label:
+          lang === Languages.KH
+            ? TRANSLATIONS[Languages.KH].system
+            : TRANSLATIONS[Languages.EN].system,
         route: "/admin/system",
       },
-      // {
-      //   icon: <VscAccount size={20} />,
-      //   label: "Profile",
-      //   route: "#",
-      //   children: [
-      //     { label: "Information", route: "/admin/profile/information" },
-      //     { label: "Setting", route: "/admin/profile/setting" },
-      //     { label: "Session", route: "/admin/profile/session" },
-      //   ],
-      // },
     ],
   },
 ];
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   const [pageName, setPageName] = useLocalStorage("selectedMenu", "dashboard");
+
+  // lang
+  const [language, setLanguage] = useState<Languages>(Languages.EN);
+
+  useEffect(() => {
+    const storedLang =
+      (localStorage.getItem("lang") as Languages) || Languages.EN;
+    setLanguage(storedLang);
+  }, []);
+  // end lang
 
   return (
     <ClickOutside onClick={() => setSidebarOpen(false)}>

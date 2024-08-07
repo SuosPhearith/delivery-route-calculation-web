@@ -303,7 +303,7 @@ const OfficerController = () => {
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
                           <h4 className="flex items-center text-black dark:text-gray-200">
                             <span className="me-2">{item.Zone?.length}</span>
-                            <RiMapPinLine />
+                            <RiMapPinLine className="mb-[2px]" />
                           </h4>
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
