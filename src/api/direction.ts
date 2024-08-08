@@ -12,6 +12,7 @@ export interface Direction {
   id?: number;
   group?: string;
   note: string;
+  file?: string;
   totalDirections?: number;
   totalRoutes?: number;
   createdAt?: string;

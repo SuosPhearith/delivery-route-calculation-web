@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Input, message, Modal, notification, Popconfirm } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import { FaRegEdit, FaRoute } from "react-icons/fa";
+import { FaDownload, FaRegEdit, FaRoute } from "react-icons/fa";
 import { FaRegTrashCan, FaRegEye } from "react-icons/fa6";
 import {
   LuArrowLeft,
@@ -24,10 +24,15 @@ import {
   getAllDirection,
   ResponseAll,
 } from "@/api/direction";
-import { MdAltRoute, MdOutlineDirections } from "react-icons/md";
+import {
+  MdAltRoute,
+  MdOutlineDirections,
+  MdOutlineFileDownload,
+} from "react-icons/md";
 import { CiRoute } from "react-icons/ci";
 import { TbMapPin2 } from "react-icons/tb";
 import { RiFileExcel2Line } from "react-icons/ri";
+const baseUrl = process.env.NEXT_PUBLIC_IMG_URL;
 
 const DirectionComponent = () => {
   const router = useRouter();
@@ -285,6 +290,13 @@ const DirectionComponent = () => {
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
                           <h4 className="flex text-black dark:text-gray-200">
+                            {!item?.file ? (
+                              ""
+                            ) : (
+                              <a href={`${baseUrl}/${item.file}`}>
+                                <MdOutlineFileDownload size={18} />
+                              </a>
+                            )}
                             <Link href={`direction/${item.id}`}>
                               <TbMapPin2
                                 size={18}

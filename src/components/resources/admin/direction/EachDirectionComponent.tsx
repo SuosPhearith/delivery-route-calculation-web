@@ -161,7 +161,7 @@ const EachDirectionComponent: React.FC<DirectionProps> = ({ id }) => {
   };
 
   return (
-    <section className="container mx-auto">
+    <section className="">
       <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       <div className="p-3">
         <div className="flex items-center justify-between">
