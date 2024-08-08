@@ -9,13 +9,22 @@ import React, { useState, useEffect } from "react";
 import { FaListUl, FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import Skeleton from "../../components/Skeleton";
 import dynamic from "next/dynamic";
-import { MdAltRoute } from "react-icons/md";
+import { MdAltRoute, MdOutlineShowChart } from "react-icons/md";
 import Link from "next/link";
-import { Drawer } from "antd";
+import { Drawer, Input } from "antd";
 import { FiUsers } from "react-icons/fi";
+import { LuSearch } from "react-icons/lu";
+import { useRouter, useSearchParams } from "next/navigation";
+import Sidebar from "@/components/Sidebar";
+import Header from "@/components/Header";
+import { IoChevronBackCircle } from "react-icons/io5";
 
 // Dynamically import Map component with no SSR
 const Map = dynamic(() => import("../Map"), {
+  ssr: false,
+});
+// Dynamically import Map component with no SSR
+const MapWithoutPolyline = dynamic(() => import("../MapWithoutPolyline"), {
   ssr: false,
 });
 
@@ -42,15 +51,27 @@ const EachDirectionComponent: React.FC<DirectionProps> = ({ id }) => {
     queryFn: () => getEachDirection(id),
   });
 
+  const searchParams = useSearchParams();
+  const selectedQuery = searchParams.get("query");
+  const router = useRouter();
   const [visibleGroups, setVisibleGroups] = useState<number[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Route | null>(null);
+  const [showLine, setShowLine] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (data) {
       setVisibleGroups(data.map((_, index) => index));
     }
   }, [data]);
+
+  useEffect(() => {
+    if (selectedQuery) {
+      setSearchQuery(selectedQuery);
+    }
+  }, [selectedQuery]);
 
   const handleEyeClick = (index: number) => {
     setVisibleGroups((prevVisibleGroups) =>
@@ -78,10 +99,20 @@ const EachDirectionComponent: React.FC<DirectionProps> = ({ id }) => {
     setSelectedGroup(null);
   };
 
-  const markerGroups = data?.map((group) =>
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    router.replace(window.location.pathname);
+  };
+
+  const filteredData = data?.filter((route) =>
+    route.route.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  const markerGroups = filteredData?.map((group) =>
     group.directions.map((direction) => ({
       position: [direction.lat, direction.long],
-      popupText: direction.name,
+      popupText: direction,
     })),
   );
 
@@ -102,144 +133,128 @@ const EachDirectionComponent: React.FC<DirectionProps> = ({ id }) => {
   );
 
   return (
-    <section className="container mx-auto px-1">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-x-3">
-            <h2 className="text-lg font-medium text-gray-800 dark:text-white">
-              Directions
-            </h2>
-            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600 dark:bg-gray-800 dark:text-blue-400">
-              {sumOfLatFromAllDirections(data)} Directions
-            </span>
-            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600 dark:bg-gray-800 dark:text-blue-400">
-              {data.length} Routes
-            </span>
+    <section className="container mx-auto">
+      <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <div className="p-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-x-3">
+              <Link href={"/admin/direction"}>
+                <IoChevronBackCircle
+                  color="blue"
+                  className="cursor-pointer"
+                  size={30}
+                />
+              </Link>
+              <h2 className="text-lg font-medium text-gray-800 dark:text-white">
+                Directions
+              </h2>
+              <span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600 dark:bg-gray-800 dark:text-blue-400">
+                {sumOfLatFromAllDirections(data)} Directions
+              </span>
+              <span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600 dark:bg-gray-800 dark:text-blue-400">
+                {data.length} Routes
+              </span>
+            </div>
           </div>
-        </div>
-        <div className="flex gap-x-2">
-          <div
-            title="Show All"
-            className="flex cursor-pointer justify-center rounded-md bg-primary p-1"
-            onClick={handleShowAllClick}
-          >
-            <FaRegEye color="white" size={20} />
-          </div>
-          <div
-            title="Hide All"
-            className="flex cursor-pointer justify-center rounded-md bg-primary p-1"
-            onClick={handleHideAllClick}
-          >
-            <FaRegEyeSlash color="white" size={20} />
-          </div>
-        </div>
-      </div>
-      {/* <div className="mt-2 flex justify-between max-[700px]:flex-col">
-        <div className="h-[80vh] w-1/5 overflow-auto p-1 pe-3  max-[700px]:flex max-[700px]:h-[200px] max-[700px]:w-full max-[700px]:overflow-y-auto">
-          {data.map((item, index) => (
+          <div className="flex gap-x-2">
             <div
-              key={item.route}
-              className="mx-auto mb-2 max-w-sm overflow-hidden bg-white shadow max-[700px]:w-[300px] sm:rounded-md"
+              title="Toggle Polylines"
+              className={`flex cursor-pointer items-center justify-center rounded-md`}
+              onClick={() => setShowLine(!showLine)}
             >
-              <div className="">
-                <div className="px-2 py-2 sm:px-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="flex items-center text-lg font-medium leading-6 text-gray-900">
-                      <span className="me-1">
-                        <MdAltRoute size={20} />
-                      </span>{" "}
-                      {item.route}
-                    </h3>
-                    <FaListUl
-                      size={18}
-                      className="cursor-pointer text-green-700"
-                      onClick={() => handleDrawerOpen(item)}
-                    />
-                  </div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <p className="text-sm font-medium text-gray-500">
-                      Total direction:
-                      <span className="ms-1 text-green-600">
-                        {item.directions.length}
-                      </span>
-                    </p>
-                    {visibleGroups.includes(index) ? (
-                      <FaRegEye
-                        color="blue"
-                        size={20}
-                        className="cursor-pointer"
-                        onClick={() => handleEyeClick(index)}
+              <MdOutlineShowChart
+                className={showLine ? "text-blue-900" : "text-red"}
+                size={25}
+              />
+            </div>
+            <div
+              title="Show All"
+              className="flex cursor-pointer items-center justify-center rounded-md "
+              onClick={handleShowAllClick}
+            >
+              <FaRegEye className="text-blue-900" size={25} />
+            </div>
+            <div
+              title="Hide All"
+              className="flex cursor-pointer items-center justify-center rounded-md "
+              onClick={handleHideAllClick}
+            >
+              <FaRegEyeSlash className="text-blue-900" size={25} />
+            </div>
+            <div>
+              <Input
+                className="h-full w-[250px] max-[770px]:w-full"
+                prefix={<LuSearch />}
+                onChange={handleSearchChange}
+                value={searchQuery}
+                type="text"
+                placeholder="Search Routes"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-2 flex justify-between max-[700px]:flex-col">
+          <div className="h-[80vh] w-1/5 overflow-y-auto p-1 pe-3 max-[700px]:flex max-[700px]:h-[100px] max-[700px]:w-full max-[700px]:overflow-x-auto max-[700px]:overflow-y-hidden">
+            {filteredData?.map((item, index) => (
+              <div
+                key={item.route}
+                className="mx-auto mb-2 max-w-sm overflow-hidden bg-white shadow max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[200px] sm:rounded-md"
+              >
+                <div className="">
+                  <div className="px-2 py-2 sm:px-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="flex items-center text-lg font-medium leading-6 text-gray-900">
+                        <span className="me-1">
+                          <MdAltRoute size={20} />
+                        </span>{" "}
+                        {item.route}
+                      </h3>
+                      <FaListUl
+                        size={18}
+                        className="cursor-pointer text-green-700"
+                        onClick={() => handleDrawerOpen(item)}
                       />
-                    ) : (
-                      <FaRegEyeSlash
-                        color="blue"
-                        size={20}
-                        className="cursor-pointer"
-                        onClick={() => handleEyeClick(index)}
-                      />
-                    )}
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <p className="text-sm font-medium text-gray-500">
+                        Total directions:
+                        <span className="ms-1 text-green-600">
+                          {item.directions.length}
+                        </span>
+                      </p>
+                      {visibleGroups.includes(index) ? (
+                        <FaRegEye
+                          color="blue"
+                          size={20}
+                          className="cursor-pointer"
+                          onClick={() => handleEyeClick(index)}
+                        />
+                      ) : (
+                        <FaRegEyeSlash
+                          color="blue"
+                          size={20}
+                          className="cursor-pointer"
+                          onClick={() => handleEyeClick(index)}
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-        <div className="w-4/5 p-1 max-[700px]:h-[700px] max-[700px]:w-full">
-          <Map markerGroups={visibleMarkerGroups || []} colors={colors} />
-        </div>
-      </div> */}
-      <div className="mt-2 flex justify-between max-[700px]:flex-col">
-        <div className="h-[80vh] w-1/5  overflow-y-auto p-1 pe-3 max-[700px]:flex max-[700px]:h-[100px] max-[700px]:w-full max-[700px]:overflow-x-auto max-[700px]:overflow-y-hidden">
-          {data.map((item, index) => (
-            <div
-              key={item.route}
-              className="mx-auto mb-2 max-w-sm overflow-hidden bg-white shadow max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[200px] sm:rounded-md"
-            >
-              <div className="">
-                <div className="px-2 py-2 sm:px-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="flex items-center text-lg font-medium leading-6 text-gray-900">
-                      <span className="me-1">
-                        <MdAltRoute size={20} />
-                      </span>{" "}
-                      {item.route}
-                    </h3>
-                    <FaListUl
-                      size={18}
-                      className="cursor-pointer text-green-700"
-                      onClick={() => handleDrawerOpen(item)}
-                    />
-                  </div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <p className="text-sm font-medium text-gray-500">
-                      Total direction:
-                      <span className="ms-1 text-green-600">
-                        {item.directions.length}
-                      </span>
-                    </p>
-                    {visibleGroups.includes(index) ? (
-                      <FaRegEye
-                        color="blue"
-                        size={20}
-                        className="cursor-pointer"
-                        onClick={() => handleEyeClick(index)}
-                      />
-                    ) : (
-                      <FaRegEyeSlash
-                        color="blue"
-                        size={20}
-                        className="cursor-pointer"
-                        onClick={() => handleEyeClick(index)}
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="w-4/5 p-1 max-[700px]:h-[700px] max-[700px]:w-full">
-          <Map markerGroups={visibleMarkerGroups || []} colors={colors} />
+            ))}
+          </div>
+          <div className="w-4/5 p-1 max-[700px]:h-[700px] max-[700px]:w-full">
+            {showLine ? (
+              <Map markerGroups={visibleMarkerGroups || []} colors={colors} />
+            ) : (
+              <MapWithoutPolyline
+                markerGroups={visibleMarkerGroups || []}
+                colors={colors}
+              />
+            )}
+          </div>
         </div>
       </div>
 

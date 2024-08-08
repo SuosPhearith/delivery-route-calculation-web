@@ -39,7 +39,7 @@ const SignIn = () => {
         route.push("/admin");
       }
     } catch (error: any) {
-      setErrorMessage(error.response.data.message);
+      setErrorMessage(error?.response?.data?.message || "Something went wrong");
     } finally {
       setIsPending(false);
     }

@@ -9,6 +9,7 @@ import {
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { FC } from "react";
+import Link from "next/link";
 
 // Fix icon issue with Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -21,7 +22,7 @@ L.Icon.Default.mergeOptions({
 
 interface MarkerData {
   position: [number, number];
-  popupText: string;
+  popupText: any;
 }
 
 interface MapProps {
@@ -57,7 +58,25 @@ const Map: FC<MapProps> = ({ markerGroups, colors }) => {
                 position={marker.position}
                 icon={createCustomMarker(color)}
               >
-                <Popup>{marker.popupText}</Popup>
+                <Popup>
+                  <div>
+                    <p>
+                      <strong>Route:</strong> {marker.popupText.route}
+                    </p>
+                    <p>
+                      <strong>Name:</strong> {marker.popupText.name}
+                    </p>
+                    <p>
+                      <strong>Status:</strong> {marker.popupText.status}
+                    </p>
+                    <p>
+                      <strong>Type:</strong> {marker.popupText.type}
+                    </p>
+                    <Link href={`?query=${marker.popupText.route}`}>
+                      Show Detail
+                    </Link>
+                  </div>
+                </Popup>
               </Marker>
             ))}
             <Polyline
