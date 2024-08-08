@@ -28,9 +28,17 @@ export const sumOfLatFromAllDirections = (routes: Route[]): number => {
   return totalLat;
 };
 
-export const getEachDirection = async (id: number): Promise<Route[]> => {
+export const getEachDirection = async (
+  id: number,
+  order: string,
+): Promise<Route[]> => {
   try {
-    const res = await apiRequest("GET", `/direction/${id}`);
+    const params = new URLSearchParams();
+
+    if (order) {
+      params.append("order", order);
+    }
+    const res = await apiRequest("GET", `/direction/${id}?order=${order}`);
     return res;
   } catch (error) {
     throw error;

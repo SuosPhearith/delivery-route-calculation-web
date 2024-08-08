@@ -30,10 +30,46 @@ interface MapProps {
   colors: string[];
 }
 
-const createCustomMarker = (color: string) => {
+const createCustomMarker = (color: string, order: number) => {
   return L.divIcon({
     className: "custom-icon",
-    html: `<div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%;"></div>`,
+    // html: `<div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; text-align: center; font-size: 12px;">${order}</div>`,
+    html: `<div style="
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      background-color: ${color}; 
+      width: 20px; 
+      height: 20px; 
+      border: 1px solid #920f60; 
+      border-radius: 50%;
+      font-weight: bold;
+      color: black;
+      font-size: 14px;
+    ">
+      ${order}
+    </div>`,
+  });
+};
+
+const createStartPointMarker = (color: string) => {
+  return L.divIcon({
+    className: "custom-icon",
+    html: `<div style="
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      background-color: ${color}; 
+      width: 20px; 
+      height: 20px; 
+      border: 2px solid black; 
+      border-radius: 50%;
+      font-weight: bold;
+      color: black;
+      font-size: 14px;
+    ">
+      S
+    </div>`,
   });
 };
 
@@ -52,33 +88,35 @@ const Map: FC<MapProps> = ({ markerGroups, colors }) => {
         const color = colors[groupIndex % colors.length];
         return (
           <>
-            {group.map((marker, index) => (
-              <Marker
-                key={index}
-                position={marker.position}
-                icon={createCustomMarker(color)}
-              >
-                <Popup>
-                  <div>
-                    <p>
-                      <strong>Route:</strong> {marker.popupText.route}
-                    </p>
-                    <p>
-                      <strong>Name:</strong> {marker.popupText.name}
-                    </p>
-                    <p>
-                      <strong>Status:</strong> {marker.popupText.status}
-                    </p>
-                    <p>
-                      <strong>Type:</strong> {marker.popupText.type}
-                    </p>
-                    <Link href={`?query=${marker.popupText.route}`}>
-                      Show Detail
-                    </Link>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
+            {group.map((marker, index) => {
+              const isStartPoint = index === 0;
+              const icon = isStartPoint
+                ? createStartPointMarker(color)
+                : createCustomMarker(color, index + 1); // Pass order number (index + 1)
+              return (
+                <Marker key={index} position={marker.position} icon={icon}>
+                  <Popup>
+                    <div>
+                      <p>
+                        <strong>Route:</strong> {marker.popupText.route}
+                      </p>
+                      <p>
+                        <strong>Name:</strong> {marker.popupText.name}
+                      </p>
+                      <p>
+                        <strong>Status:</strong> {marker.popupText.status}
+                      </p>
+                      <p>
+                        <strong>Type:</strong> {marker.popupText.type}
+                      </p>
+                      <Link href={`?query=${marker.popupText.route}`}>
+                        Show Detail
+                      </Link>
+                    </div>
+                  </Popup>
+                </Marker>
+              );
+            })}
             <Polyline
               key={`polyline-${groupIndex}`}
               positions={group.map((marker) => marker.position)}

@@ -4,7 +4,7 @@ import {
   Route,
   sumOfLatFromAllDirections,
 } from "@/api/eachDirection";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useState, useEffect } from "react";
 import { FaListUl, FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import Skeleton from "../../components/Skeleton";
@@ -18,6 +18,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import { IoChevronBackCircle } from "react-icons/io5";
+import { LiaToggleOffSolid, LiaToggleOnSolid } from "react-icons/lia";
 
 // Dynamically import Map component with no SSR
 const Map = dynamic(() => import("../Map"), {
@@ -48,11 +49,12 @@ const colors = [
 const EachDirectionComponent: React.FC<DirectionProps> = ({ id }) => {
   const { data, isLoading, isError } = useQuery<Route[]>({
     queryKey: ["eachDirections", id],
-    queryFn: () => getEachDirection(id),
+    queryFn: () => getEachDirection(id, order),
   });
 
   const searchParams = useSearchParams();
   const selectedQuery = searchParams.get("query");
+  const selectedOrder = searchParams.get("order");
   const router = useRouter();
   const [visibleGroups, setVisibleGroups] = useState<number[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -60,6 +62,8 @@ const EachDirectionComponent: React.FC<DirectionProps> = ({ id }) => {
   const [showLine, setShowLine] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [order, setOrder] = useState(selectedOrder || "");
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (data) {
@@ -132,6 +136,30 @@ const EachDirectionComponent: React.FC<DirectionProps> = ({ id }) => {
     visibleGroups.includes(index),
   );
 
+  const switchOrder = () => {
+    // Get the current URL
+    const url = new URL(window.location.href);
+
+    // Get the current value of the 'order' query parameter
+    const currentOrder = url.searchParams.get("order");
+
+    // Toggle the 'order' query parameter
+    if (currentOrder === "order") {
+      url.searchParams.set("order", "");
+    } else {
+      url.searchParams.set("order", "order");
+    }
+
+    // Update the URL in the browser without reloading the page
+    window.history.pushState({}, "", url);
+
+    // Invalidate the query to refetch data
+    queryClient.invalidateQueries({ queryKey: ["eachDirections"] });
+
+    // Reload the page
+    window.location.reload();
+  };
+
   return (
     <section className="container mx-auto">
       <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
@@ -155,6 +183,13 @@ const EachDirectionComponent: React.FC<DirectionProps> = ({ id }) => {
               <span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600 dark:bg-gray-800 dark:text-blue-400">
                 {data.length} Routes
               </span>
+              <button onClick={switchOrder}>
+                {order === "order" ? (
+                  <LiaToggleOnSolid size={30} title="Switch to NNA" />
+                ) : (
+                  <LiaToggleOffSolid size={30} title="Switch to order" />
+                )}
+              </button>
             </div>
           </div>
           <div className="flex gap-x-2">
