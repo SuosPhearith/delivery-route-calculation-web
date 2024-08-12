@@ -1,43 +1,87 @@
 "use client";
+import {
+  assignTruck,
+  CreateDrc,
+  createDrc,
+  getAllLocations,
+  getAllTrucksByDate,
+  getAllZonesRoute,
+  Location,
+  Truck,
+  TruckByDate,
+  unassignTruck,
+} from "@/api/eachRoute";
+import {
+  getAllTruckAssistants,
+  getAllTruckDrivers,
+  getAllTruckFuels,
+  getAllTruckOwnershipTypes,
+  getAllTruckSizes,
+  getAllWarehouses,
+  getAllZones,
+} from "@/api/truck";
+import Header from "@/components/Header";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Input, message, Modal, notification, Popconfirm } from "antd";
-import { useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useRef, useState } from "react";
-import { FaRegEdit } from "react-icons/fa";
-import { FaRegTrashCan, FaRegEye } from "react-icons/fa6";
 import {
-  LuArrowLeft,
-  LuArrowRight,
-  LuPlusCircle,
-  LuSearch,
-  LuUploadCloud,
-} from "react-icons/lu";
+  Card,
+  Drawer,
+  Input,
+  InputNumber,
+  message,
+  Modal,
+  notification,
+  Popconfirm,
+  Select,
+  Space,
+} from "antd";
 import Link from "next/link";
-import { SubmitHandler, useForm } from "react-hook-form";
-
-import { RiMapPinLine } from "react-icons/ri";
-import TableSeleton from "../../components/TableSeleton";
+import React, { useMemo, useState } from "react";
 import {
-  createDRCDate,
-  deleteDRCDate,
-  DRCDate,
-  getAllDRCDate,
-  ResponseAll,
-} from "@/api/route";
+  FaCheckSquare,
+  FaListUl,
+  FaLongArrowAltRight,
+  FaRegEye,
+} from "react-icons/fa";
+import { IoChevronBackCircle } from "react-icons/io5";
+import { MdAltRoute, MdCheckBox, MdCheckBoxOutlineBlank } from "react-icons/md";
+import Skeleton from "../../components/Skeleton";
+import { LuSearch } from "react-icons/lu";
+import dynamic from "next/dynamic";
+import { GrPowerReset } from "react-icons/gr";
+import { GoLink, GoUnlink } from "react-icons/go";
+import { TiArrowRightThick } from "react-icons/ti";
+import { FaCircleCheck } from "react-icons/fa6";
+import { FiPlusCircle } from "react-icons/fi";
+import { GiCancel } from "react-icons/gi";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { IoMdAddCircleOutline, IoMdCloseCircleOutline } from "react-icons/io";
+import { CgClose } from "react-icons/cg";
+// Dynamically import Map component with no SSR
+const MapRoute = dynamic(() => import("../MapRoute"), {
+  ssr: false,
+});
+interface DirectionProps {
+  id: number;
+}
 
-const EachRouteComponent = () => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const selectedPage = Number(searchParams.get("page")) || 1;
-  const selectedLimit = Number(searchParams.get("limit")) || 28;
-  const selectedQuery = searchParams.get("query") || "";
-  const [page, setPage] = useState(selectedPage);
-  const [limit, setLimit] = useState(selectedLimit);
-  const [search, setSearch] = useState("");
-  const [query, setQuery] = useState(selectedQuery);
+const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // fetch
+  // Define state for each parameter
+  const [deliveryRouteCalculationDateId, setDeliveryRouteCalculationDateId] =
+    useState<number>(id); // Replace with actual ID
+  const [status, setStatus] = useState<string>("");
+  const [query, setQuery] = useState<string>("");
+  const [truckSizeId, setTruckSizeId] = useState<string>("");
+  const [zoneId, setZoneId] = useState<string>("");
+  const [fuelId, setFuelId] = useState<string>("");
+  const [warehouseId, setWarehouseId] = useState<string>("");
+  const [truckOwnershipTypeId, setTruckOwnershipTypeId] = useState<string>("");
+  const [link, setLink] = useState(false);
   const queryClient = useQueryClient();
   const [api, contextHolder] = notification.useNotification();
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const openNotification = (
     message: string = "Default",
     description: string = "Successfully",
@@ -50,26 +94,66 @@ const EachRouteComponent = () => {
     });
   };
 
-  // create or update
-  const [updateId, setUpdateId] = useState<number>();
+  // locations
+
+  const [locationDateId, setLocationDateId] = useState<number>(id); // Unique name for deliveryRouteCalculationDateId
+  const [locationZoneId, setLocationZoneId] = useState<string>(""); // Unique name for zoneId
+  const [locationTruckSizeId, setLocationTruckSizeId] = useState<string>(""); // Unique name for truckSizeId
+  const [locationPartOfDay, setLocationPartOfDay] = useState<string>(""); // Unique name for partOfDay
+  const [locationPriority, setLocationPriority] = useState<string>(""); // Unique name for priority
+  const [locationCapacity, setLocationCapacity] = useState<number | undefined>(
+    undefined,
+  ); // Unique name for capacity
+  const [locationQuery, setLocationQuery] = useState<string>(""); // Unique name for query
+  const [locationIsAssign, setLocationIsAssign] = useState<string>("false");
+  const [locationTruckByDateId, setLocationTruckByDateId] =
+    useState<string>("");
+
+  // drawer
+
+  const [openLocationDrawer, setOpenLocationDrawer] = useState(false);
+  const [openTruckDrawer, setOpenTruckDrawer] = useState(false);
+  const [locationItem, setLocationItem] = useState<Location | null>();
+  const [truckItem, setTruckItem] = useState<Truck | null>();
+
+  // rightClick
+  const [showButton, setShowButton] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [rightClickTruckByDateId, setRightClickTruckByDateId] = useState("");
+
+  const handleRightClick = (event: any, id: string) => {
+    event.preventDefault();
+    setPosition({ x: event.clientX, y: event.clientY });
+    setRightClickTruckByDateId(id);
+    setShowButton(true);
+  };
+
+  const handleClick = () => {
+    setShowButton(false); // Hide the button when it's clicked
+    setRightClickTruckByDateId("");
+    setLocationTruckByDateId("");
+    setLocationIsAssign("false");
+  };
+
+  // create
   const { mutateAsync: createMutaion, isPending: isPendingCreate } =
     useMutation({
-      mutationFn: createDRCDate,
+      mutationFn: createDrc,
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["drcDates"] });
-        // message.success("Officer controll created successfully");
-        openNotification("Create Date", "Date Created successfully");
+        queryClient.invalidateQueries({ queryKey: ["allLocations"] });
+        // message.success("Direction created successfully");
+        openNotification("Create Drc", "Drc Created successfully");
         handleCancel();
       },
       onError: (error: any) => {
         message.error(error);
       },
     });
-  const onSubmit: SubmitHandler<DRCDate> = async (data) => {
-    const date: DRCDate = {
-      date: data.date,
-    };
-    await createMutaion(date);
+  const onSubmit: SubmitHandler<CreateDrc> = async (data) => {
+    await createMutaion({
+      file: data.file,
+      DeliveryRouteCalculationDateId: id,
+    });
   };
   const {
     register,
@@ -77,11 +161,10 @@ const EachRouteComponent = () => {
     reset,
     formState: { errors },
     setValue,
-  } = useForm<DRCDate>();
-  // end create or update
+  } = useForm<CreateDrc>();
+  // end create
 
   //modal
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const showModal = () => {
     setIsModalOpen(true);
   };
@@ -91,219 +174,1068 @@ const EachRouteComponent = () => {
   };
 
   const handleCancel = () => {
-    setUpdateId(NaN);
-    setIsModalOpen(false);
     reset();
+    setIsModalOpen(false);
   };
   // end modal
 
-  const dateConvert = (dateStr: Date) => {
-    const date = new Date(dateStr);
+  // assign state
+  const [assign, setAssign] = useState<{ id: number; capacity: number }[]>([]);
 
-    // Extract month, day, and year
-    const month = String(date.getUTCMonth() + 1).padStart(2, "0"); // Months are 0-based, so add 1
-    const day = String(date.getUTCDate()).padStart(2, "0");
-    const year = date.getUTCFullYear();
-
-    // Format as MM/DD/YYYY
-    const formattedDate = `${month}/${day}/${year}`;
-    return formattedDate;
+  // assign function
+  const handleAssign = (id: number, capacity: number) => {
+    setAssign((prevAssign) => {
+      if (prevAssign.some((item) => item.id === id)) {
+        return prevAssign.filter((item) => item.id !== id);
+      } else {
+        return [...prevAssign, { id, capacity }];
+      }
+    });
   };
+  // assign to truck
+  const assignLocationsToTruck = async (truckByDateId: number) => {
+    // Extracting the array of ids from the assign array
+    const deliveryRouteCalculationDateIds = assign.map((item) => item.id);
 
-  // delete
-  const { mutateAsync: deleteMutate, isPending: isPendingDelete } = useMutation(
-    {
-      mutationFn: deleteDRCDate,
+    await mutateAsync({
+      truckByDateId,
+      deliveryRouteCalculationDateIds, // passing the array of ids here
+      DeliveryRouteCalculationDateId: id,
+    });
+  };
+  // unassign
+  const unassignLocationsToTruck = async () => {
+    if (locationIsAssign === "false") {
+      return message.error("Please switch to Assigned Locations");
+    }
+    if (assign.length <= 0) {
+      return message.error("Please select Locations");
+    }
+    // Extracting the array of ids from the assign array
+    const locationIds = assign.map((item) => item.id);
+
+    await unassignMutateAsync({
+      locationIds, // passing the array of ids here
+      DeliveryRouteCalculationDateId: id,
+    });
+  };
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: assignTruck,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allLocations"] });
+      // message.success("Ownership created successfully");
+      openNotification("Assigned", "Locations Unassigned successfully");
+      setAssign([]);
+    },
+    onError: (error: any) => {
+      message.error(error);
+    },
+  });
+  const { mutateAsync: unassignMutateAsync, isPending: unassignIsPending } =
+    useMutation({
+      mutationFn: unassignTruck,
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["drcDates"] });
-        // message.success("Case deleted successfully");
-        openNotification("Delete Date", "Date Deleted successfully");
+        queryClient.invalidateQueries({ queryKey: ["allLocations"] });
+        // message.success("Ownership created successfully");
+        openNotification("Unassigned", "Locations Assigned successfully");
+        setAssign([]);
       },
       onError: (error: any) => {
         message.error(error);
       },
-    },
-  );
-  const handleDelete = async (id: number) => {
-    await deleteMutate(id);
-  };
-  // end delete
+    });
 
-  //fectch
-  const { data, isLoading, isError } = useQuery<ResponseAll>({
-    queryKey: ["drcDates", page, limit, query],
-    queryFn: () => getAllDRCDate(page, limit, query),
+  // Calculate the sum of capacities
+  const totalCapacity = useMemo(() => {
+    return assign.reduce((acc, item) => acc + item.capacity, 0);
+  }, [assign]);
+
+  // drawer functions
+  const handleOpenLocationDrawer = (item: Location) => {
+    setLocationItem(item);
+    setOpenLocationDrawer(true);
+  };
+  const handleCloseLocationDrawer = () => {
+    setLocationItem(null);
+    setOpenLocationDrawer(false);
+  };
+
+  const handleOpenTruckDrawer = (item: Truck) => {
+    setTruckItem(item);
+    setOpenTruckDrawer(true);
+  };
+  const handleCloseTruckDrawer = () => {
+    setTruckItem(null);
+    setOpenTruckDrawer(false);
+  };
+
+  const viewLocationMap = (location: string) => {
+    setOpenLocationDrawer(false);
+    setLocationQuery(location);
+  };
+
+  // Fetch data using useQuery
+  const { data, isLoading, isError } = useQuery<TruckByDate[]>({
+    queryKey: [
+      "allTrucksByDate",
+      deliveryRouteCalculationDateId,
+      status,
+      query,
+      truckSizeId,
+      zoneId,
+      fuelId,
+      warehouseId,
+      truckOwnershipTypeId,
+    ],
+    queryFn: () =>
+      getAllTrucksByDate(
+        deliveryRouteCalculationDateId,
+        status,
+        query,
+        truckSizeId,
+        zoneId,
+        fuelId,
+        warehouseId,
+        truckOwnershipTypeId,
+      ),
   });
 
-  useEffect(() => {
-    setPage(selectedPage);
-    setLimit(selectedLimit);
-  }, [selectedPage, selectedLimit]);
+  // location
 
-  // if (isLoading) {
-  //   return <Skeleton />;
-  // }
-  if (isError) {
+  // Fetch data using useQuery
+  const {
+    data: dataLocations,
+    isLoading: isLoadingLocations,
+    isError: isErrorLocations,
+  } = useQuery<Location[]>({
+    queryKey: [
+      "allLocations",
+      locationDateId,
+      locationZoneId,
+      locationTruckSizeId,
+      locationPartOfDay,
+      locationPriority,
+      locationCapacity,
+      locationQuery,
+      locationIsAssign,
+      locationTruckByDateId,
+    ],
+    queryFn: () =>
+      getAllLocations(
+        locationDateId,
+        locationZoneId,
+        locationTruckSizeId,
+        locationPartOfDay,
+        locationPriority,
+        locationCapacity,
+        locationQuery,
+        locationIsAssign,
+        locationTruckByDateId,
+      ),
+  });
+
+  // end location
+
+  const {
+    data: getAllTruckSizesData,
+    isLoading: isLoadinggetAllTruckSizes,
+    isError: isErrorgetAllTruckSizes,
+  } = useQuery({
+    queryKey: ["getAllTruckSizes"],
+    queryFn: getAllTruckSizes,
+  });
+  const {
+    data: getAllTruckOwnershipTypesData,
+    isLoading: isLoadingfindAllTruckOwnershipTypes,
+    isError: isErrorfindAllTruckOwnershipTypes,
+  } = useQuery({
+    queryKey: ["findAllTruckOwnershipTypes"],
+    queryFn: getAllTruckOwnershipTypes,
+  });
+  const {
+    data: getAllWarehousesData,
+    isLoading: isLoadinggetAllWarehouses,
+    isError: isErrorgetAllWarehouses,
+  } = useQuery({
+    queryKey: ["getAllWarehouses"],
+    queryFn: getAllWarehouses,
+  });
+  const {
+    data: getAllTruckFuelsData,
+    isLoading: isLoadinggetAllTruckFuels,
+    isError: isErrorgetAllTruckFuels,
+  } = useQuery({
+    queryKey: ["getAllTruckFuels"],
+    queryFn: getAllTruckFuels,
+  });
+  const {
+    data: getAllTruckDriversData,
+    isLoading: isLoadinggetAllTruckDrivers,
+    isError: isErrorgetAllTruckDrivers,
+  } = useQuery({
+    queryKey: ["getAllTruckDrivers"],
+    queryFn: getAllTruckDrivers,
+  });
+  const {
+    data: getAllTruckAssistantsData,
+    isLoading: isLoadinggetAllTruckAssistants,
+    isError: isErrorgetAllTruckAssistants,
+  } = useQuery({
+    queryKey: ["getAllTruckAssistants"],
+    queryFn: getAllTruckAssistants,
+  });
+  const {
+    data: getAllZonesData,
+    isLoading: isLoadinggetAllZones,
+    isError: isErrorgetAllZones,
+  } = useQuery({
+    queryKey: ["getAllZones"],
+    queryFn: getAllZones,
+  });
+
+  const {
+    data: getAllZonesRouteData,
+    isLoading: isLoadinggetAllZonesRoute,
+    isError: isErrorgetAllZonesRoute,
+  } = useQuery({
+    queryKey: ["getAllZonesRoute", id],
+    queryFn: () => getAllZonesRoute(id),
+  });
+
+  // Handle loading and error states
+  if (
+    // isLoading ||
+    isLoadinggetAllZones ||
+    isLoadingfindAllTruckOwnershipTypes ||
+    isLoadinggetAllTruckAssistants ||
+    isLoadinggetAllTruckDrivers ||
+    isLoadinggetAllTruckFuels ||
+    isLoadinggetAllTruckSizes ||
+    isLoadinggetAllWarehouses ||
+    isLoadinggetAllZonesRoute
+  ) {
+    return <Skeleton />;
+  }
+  if (
+    // isError ||
+    isErrorgetAllZones ||
+    isErrorfindAllTruckOwnershipTypes ||
+    isErrorgetAllTruckAssistants ||
+    isErrorgetAllTruckDrivers ||
+    isErrorgetAllTruckFuels ||
+    isErrorgetAllTruckSizes ||
+    isErrorgetAllWarehouses
+  ) {
     return <div>Something happened</div>;
   }
 
-  const handlePageSizeChange = (
-    event: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    const newSize = Number(event.target.value);
-    setLimit(newSize);
-    router.push(`?page=1&limit=${newSize}`);
+  // end fetch
+
+  const resetLocationsFilter = () => {
+    setLocationPartOfDay("");
+    setLocationCapacity(undefined);
+    setLocationZoneId("");
+    setLocationPriority("");
+    setLocationQuery("");
+    setLocationTruckSizeId("");
   };
-  const handleChangeSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setQuery(value);
+  const resetTrucksFilter = () => {
+    setStatus("");
+    setTruckSizeId("");
+    setZoneId("");
+    setWarehouseId("");
+    setTruckOwnershipTypeId("");
+    setQuery("");
   };
-  // end fectch
+
+  const handleLink = () => {
+    setLink(!link);
+    setTruckSizeId(locationTruckSizeId);
+    setZoneId(locationZoneId);
+  };
+
+  const changeLocationZone = (value: any) => {
+    setLocationZoneId(value);
+    if (link) {
+      setZoneId(value);
+    }
+  };
+  const changeLocationSize = (value: any) => {
+    setLocationTruckSizeId(value);
+    if (link) {
+      setTruckSizeId(value);
+    }
+  };
+
+  const switchAssign = (value: any) => {
+    setAssign([]);
+    setLocationIsAssign(value);
+  };
 
   return (
-    <section className="container mx-auto px-1">
+    <section className="">
       {contextHolder}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-x-3">
-            <h2 className="text-lg font-medium text-gray-800 dark:text-white">
-              Routes
-            </h2>
-            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600 dark:bg-gray-800 dark:text-blue-400">
-              {data?.totalCount} Routess
-            </span>
-          </div>
-        </div>
-        <div
-          title="Create"
-          className="flex cursor-pointer justify-center rounded-md bg-primary p-1"
-        >
-          <LuPlusCircle color="white" size={20} onClick={showModal} />
-        </div>
-      </div>
-      {/* <div className=" md:flex md:items-center md:justify-end">
-        <div className="flex flex-col">
-          <p className="me-1 text-xs">.</p>
-          <input
-            className="w-[250px] rounded-md border-[1px] border-slate-300 p-1 max-[770px]:w-full"
-            type="date"
-            onChange={handleChangeSearch}
-            value={search ? search : query}
-            placeholder="Search"
-          />
-        </div>
-      </div> */}
-      {isLoading ? (
-        <div>
-          <TableSeleton />
-        </div>
-      ) : (
-        <div className="lg:grid-cols mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-          {data?.data.map((item, index) => (
-            <div
-              key={item.id}
-              className="cursor-pointer rounded-sm border-[1px] border-slate-400 bg-gray-200 p-4 text-black hover:bg-slate-300 dark:bg-gray-800 dark:hover:bg-gray-700"
-            >
-              <div className="flex items-center">
-                <div className="w-1/2 dark:text-white">
-                  {dateConvert(item.date)}
-                </div>
-                <div className="w-1/4">
-                  <h4 className="flex items-center text-black dark:text-gray-200">
-                    <div className="me-2">
-                      {/* {item.DeliveryRouteCalculationDateGroupLocation?.length} */}
-                    </div>
-                    <RiMapPinLine className="mb-1" />
-                  </h4>
-                </div>
-                <div className="w-1/4">
-                  <h4 className="float-end flex text-black dark:text-gray-200">
-                    <Link href={`route/1`}>
-                      <FaRegEye
-                        size={18}
-                        className="mx-1 cursor-pointer"
-                        title="See detail"
-                      />
-                    </Link>
-                    <Popconfirm
-                      title="Delete"
-                      description="Are you sure to delete?"
-                      okText="Yes"
-                      cancelText="No"
-                      onConfirm={() => handleDelete(item.id || 0)}
-                    >
-                      <FaRegTrashCan
-                        size={18}
-                        // color="red"
-                        className="mx-1 cursor-pointer text-red "
-                        title="Delete item"
-                      />
-                    </Popconfirm>
-                  </h4>
+      <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <div className="px-3 py-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-x-3">
+              <Link href={"/admin/route"}>
+                <IoChevronBackCircle
+                  color="blue"
+                  className="cursor-pointer"
+                  size={30}
+                />
+              </Link>
+              <div className="flex flex-col ">
+                <Select
+                  showSearch
+                  className="w-[135px] max-[770px]:w-full"
+                  defaultValue=""
+                  value={status}
+                  optionFilterProp="label"
+                  onChange={(value) => setStatus(value)}
+                  options={[
+                    {
+                      value: "",
+                      label: "All Status",
+                    },
+                    {
+                      value: "AVAILABLE",
+                      label: "AVAILABLE",
+                    },
+                    {
+                      value: "IN_USE",
+                      label: "IN_USE",
+                    },
+                    {
+                      value: "MAINTENANCE",
+                      label: "MAINTENANCE",
+                    },
+                  ]}
+                />
+              </div>
+              <div className="flex flex-col ">
+                <Select
+                  // size="small"
+                  showSearch
+                  className="w-[100px] max-[770px]:w-full"
+                  defaultValue=""
+                  value={truckSizeId}
+                  optionFilterProp="label"
+                  onChange={(value) => setTruckSizeId(value)}
+                  options={[
+                    { value: "", label: "All Size" },
+                    ...getAllTruckSizesData,
+                  ]}
+                />
+              </div>
+              <div className="flex flex-col ">
+                <Select
+                  // size="small"
+                  showSearch
+                  className="w-[150px] max-[770px]:w-full"
+                  // style={{ width: 200 }}
+                  defaultValue=""
+                  value={zoneId}
+                  optionFilterProp="label"
+                  onChange={(value) => setZoneId(value)}
+                  options={[
+                    { value: "", label: "All Zone" },
+                    ...getAllZonesData,
+                  ]}
+                />
+              </div>
+              <div className="flex flex-col ">
+                <Select
+                  // size="small"
+                  showSearch
+                  className="w-[150px] max-[770px]:w-full"
+                  // style={{ width: 150 }}
+                  defaultValue=""
+                  value={warehouseId}
+                  optionFilterProp="label"
+                  onChange={(value) => setWarehouseId(value)}
+                  options={[
+                    { value: "", label: "All Warehouse" },
+                    ...getAllWarehousesData,
+                  ]}
+                />
+              </div>
+              <div className="flex flex-col">
+                <Select
+                  // size="small"
+                  showSearch
+                  className="w-[150px] max-[770px]:w-full"
+                  // style={{ width: 150 }}
+                  defaultValue=""
+                  value={truckOwnershipTypeId}
+                  optionFilterProp="label"
+                  onChange={(value) => setTruckOwnershipTypeId(value)}
+                  options={[
+                    { value: "", label: "All Ownership" },
+                    ...getAllTruckOwnershipTypesData,
+                  ]}
+                />
+              </div>
+              <div className="flex flex-col">
+                <Input
+                  allowClear
+                  className="w-[160px] max-[770px]:w-full"
+                  prefix={<LuSearch />}
+                  onChange={(e) => setQuery(e.target.value)}
+                  value={query}
+                  placeholder="Search by plate"
+                />
+              </div>
+              <div className="flex flex-col ">
+                <Popconfirm
+                  placement="rightTop"
+                  title="Remove Truck Filter"
+                  description="Are you sure?"
+                  onConfirm={resetTrucksFilter}
+                  okText="Yes"
+                  cancelText="No"
+                >
+                  <div
+                    title="Reset truck filter"
+                    className="flex cursor-pointer justify-center rounded-md bg-primary p-1"
+                  >
+                    <GrPowerReset color="white" size={20} />
+                  </div>
+                </Popconfirm>
+              </div>
+              <div className="flex flex-col ">
+                <div
+                  onClick={showModal}
+                  title="Reset truck filter"
+                  className="flex cursor-pointer justify-center rounded-md bg-primary p-1"
+                >
+                  <IoMdAddCircleOutline color="white" size={20} />
                 </div>
               </div>
             </div>
-          ))}
+          </div>
+          <div className="flex gap-x-2"></div>
         </div>
-      )}
-      <div className="mt-6 sm:flex sm:items-center sm:justify-between">
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          Page
-          <span className="font-medium text-black dark:text-gray-100">
-            {page} of {data?.totalPages}
-          </span>
+        {/* locations */}
+        <div className="flex w-full items-center justify-between">
+          <div className="flex w-full">
+            <div className="flex w-full flex-wrap items-center justify-between gap-x-3">
+              <div className="ms-[10px] flex flex-col">
+                {link ? (
+                  <GoUnlink
+                    className="cursor-pointer text-primary"
+                    onClick={handleLink}
+                    size={20}
+                  />
+                ) : (
+                  <GoLink
+                    className="cursor-pointer text-primary"
+                    onClick={handleLink}
+                    size={20}
+                  />
+                )}
+              </div>
+              <div className="flex flex-col ">
+                <Select
+                  showSearch
+                  className="w-[135px] max-[770px]:w-full"
+                  defaultValue=""
+                  value={locationPartOfDay}
+                  optionFilterProp="label"
+                  onChange={(value) => setLocationPartOfDay(value)}
+                  options={[
+                    {
+                      value: "",
+                      label: "All Time",
+                    },
+                    {
+                      value: "MORNING",
+                      label: "MORNING",
+                    },
+                    {
+                      value: "AFTERNOON",
+                      label: "AFTERNOON",
+                    },
+                    {
+                      value: "EVENING",
+                      label: "EVENING",
+                    },
+                    {
+                      value: "NIGHT",
+                      label: "NIGHT",
+                    },
+                  ]}
+                />
+              </div>
+              <div className="flex flex-col ">
+                <Select
+                  // size="small"
+                  showSearch
+                  className="w-[100px] max-[770px]:w-full"
+                  defaultValue=""
+                  value={locationTruckSizeId}
+                  optionFilterProp="label"
+                  onChange={(value) => changeLocationSize(value)}
+                  options={[
+                    { value: "", label: "All Size" },
+                    ...getAllTruckSizesData,
+                  ]}
+                />
+              </div>
+              <div className="flex flex-col ">
+                <Select
+                  // size="small"
+                  showSearch
+                  className="w-[150px] max-[770px]:w-full"
+                  // style={{ width: 200 }}
+                  defaultValue=""
+                  value={locationZoneId}
+                  optionFilterProp="label"
+                  onChange={(value) => changeLocationZone(value)}
+                  options={[
+                    { value: "", label: "All Zone" },
+                    ...getAllZonesRouteData,
+                  ]}
+                />
+              </div>
+              <div className="flex flex-col ">
+                <Select
+                  showSearch
+                  className="w-[150px] max-[770px]:w-full"
+                  defaultValue=""
+                  value={locationPriority}
+                  optionFilterProp="label"
+                  onChange={(value) => setLocationPriority(value)}
+                  options={[
+                    {
+                      value: "",
+                      label: "All Priority",
+                    },
+                    {
+                      value: "CRITICAL",
+                      label: "CRITICAL",
+                    },
+                    {
+                      value: "HIGH",
+                      label: "HIGH",
+                    },
+                    {
+                      value: "MEDIUM",
+                      label: "MEDIUM",
+                    },
+                    {
+                      value: "LOW",
+                      label: "LOW",
+                    },
+                    {
+                      value: "TRIVIAL",
+                      label: "TRIVIAL",
+                    },
+                  ]}
+                />
+              </div>
+              <div className="flex flex-col">
+                <InputNumber
+                  className="w-[150px] max-[770px]:w-full"
+                  placeholder="< Capacity"
+                  prefix={<LuSearch />}
+                  value={locationCapacity}
+                  onChange={(value) => setLocationCapacity(value || 0)}
+                />
+              </div>
+              <div className="flex flex-col">
+                <Input
+                  allowClear
+                  className="w-[160px] max-[770px]:w-full"
+                  prefix={<LuSearch />}
+                  onChange={(e) => setLocationQuery(e.target.value)}
+                  value={locationQuery}
+                  placeholder="Search location"
+                />
+              </div>
+              <div className="flex flex-col ">
+                <Popconfirm
+                  placement="rightTop"
+                  title="Remove Locations Filter"
+                  description="Are you sure?"
+                  onConfirm={resetLocationsFilter}
+                  okText="Yes"
+                  cancelText="No"
+                >
+                  <div
+                    title="Reset location filter"
+                    className="flex cursor-pointer justify-center rounded-md bg-primary p-1"
+                  >
+                    <GrPowerReset color="white" size={20} />
+                  </div>
+                </Popconfirm>
+              </div>
+              <div className="flex flex-col ">
+                <Select
+                  showSearch
+                  className="w-[160px] max-[770px]:w-full"
+                  defaultValue="false"
+                  value={locationIsAssign}
+                  optionFilterProp="label"
+                  onChange={(value) => switchAssign(value)}
+                  options={[
+                    {
+                      value: "false",
+                      label: "Unassigned",
+                    },
+                    {
+                      value: "true",
+                      label: "Assigned",
+                    },
+                  ]}
+                />
+              </div>
+              <div className="flex w-[290px] justify-center rounded-md border-[1px] bg-gray-50 p-1 px-2 text-black">
+                Selected Locations: {assign.length}({totalCapacity.toFixed(4)}
+                m³)
+              </div>
+              <div className="flex flex-col ">
+                <Popconfirm
+                  placement="rightTop"
+                  title="Unassign"
+                  description="Are you sure?"
+                  onConfirm={unassignLocationsToTruck}
+                  okText="Yes"
+                  cancelText="No"
+                >
+                  <div
+                    title="Reset location filter"
+                    className="flex cursor-pointer justify-center rounded-md bg-slate-300 p-1"
+                  >
+                    <GiCancel color="red" size={20} />
+                  </div>
+                </Popconfirm>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="mt-4 flex items-center gap-x-4 sm:mt-0">
-          <Link
-            href={`?page=${page > 1 ? page - 1 : 1}&limit=${limit}`}
-            className="flex w-1/2 items-center justify-center gap-x-2 rounded-md border bg-white px-5 py-2 text-sm capitalize text-black transition-colors duration-200 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 sm:w-auto"
-          >
-            <LuArrowLeft size={20} />
-            <span>Previous</span>
-          </Link>
-          <Link
-            href={`?page=${page < (data?.totalPages || 1) ? page + 1 : page}&limit=${limit}`}
-            className="flex w-1/2 items-center justify-center gap-x-2 rounded-md border bg-white px-5 py-2 text-sm capitalize text-black transition-colors duration-200 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 sm:w-auto"
-          >
-            <span>Next</span>
-            <LuArrowRight size={20} />
-          </Link>
-          <select
-            name="warehouse"
-            value={limit}
-            onChange={handlePageSizeChange}
-            className="flex w-1/2 items-center justify-center gap-x-2 rounded-md border bg-white px-5 py-2 text-sm capitalize text-black transition-colors duration-200 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 sm:w-auto"
-            id="warehouse"
-          >
-            <option value="28">28</option>
-            <option value="60">60</option>
-            <option value="75">75</option>
-            <option value="100">100</option>
-          </select>
+
+        <div className="mt-2 flex justify-between max-[700px]:flex-col">
+          <div className="h-[80vh] w-1/5 min-w-[300px] overflow-y-auto p-1 pe-3 max-[700px]:flex max-[700px]:h-fit max-[700px]:w-full max-[700px]:overflow-x-auto max-[700px]:overflow-y-hidden">
+            {data?.map((item) => (
+              <div
+                onContextMenu={() =>
+                  handleRightClick(event, item.id.toString())
+                }
+                key={item.id}
+                className="mx-auto mb-2  max-w-sm overflow-hidden border-[1px] border-gray-300 bg-white shadow max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[300px] sm:rounded-md"
+              >
+                <div className="">
+                  <div className="px-2 py-2 sm:px-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="flex items-center text-sm  leading-6 text-primary">
+                        {item.truck.licensePlate}
+                        <span className="text-md ms-1 text-black">
+                          ({item?.truck?.truckSize?.name})
+                        </span>
+                        <span className="text-md ms-1 text-green-700">
+                          {item.status}
+                        </span>
+                      </h3>
+                      <FiPlusCircle
+                        size={20}
+                        className="cursor-pointer text-green-700"
+                        onClick={() => assignLocationsToTruck(item.id)}
+                      />
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className="flex">
+                        <div className="me-2 w-[100px] text-sm text-gray-500">
+                          <span className="text-xs">Zone:</span>
+                          <span
+                            className="ms-1 cursor-help text-red-900"
+                            title={item.truck.zone.name}
+                          >
+                            {item.truck.zone.code}
+                          </span>
+                        </div>
+                        <div className="me-2 ms-1 text-sm text-gray-500">
+                          <span className="text-xs">Capacity:</span>
+                          <span className="ms-1 text-xs text-green-600">
+                            {item.capacity.toFixed(2)}m³
+                          </span>
+                        </div>
+                      </div>
+                      <FaRegEye
+                        color="blue"
+                        size={20}
+                        className="cursor-pointer"
+                        onClick={() => handleOpenTruckDrawer(item.truck)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="h-[80vh] w-1/5 min-w-[300px] overflow-y-auto p-1 pe-3 max-[700px]:flex max-[700px]:h-fit max-[700px]:w-full max-[700px]:overflow-x-auto max-[700px]:overflow-y-hidden">
+            {dataLocations?.map((item) => (
+              <div
+                // onClick={() => handleAssign(item.id, item.capacity || 0)}
+                // onDoubleClick={() => handleOpenLocationDrawer(item)}
+                key={item.id}
+                className={`mx-auto mb-2 max-w-sm overflow-hidden border-[1px] bg-white shadow-md max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[300px] sm:rounded-lg ${
+                  item.priority === "CRITICAL"
+                    ? "border-red-500"
+                    : item.priority === "HIGH"
+                      ? "border-orange-500"
+                      : item.priority === "MEDIUM"
+                        ? "border-orange-300"
+                        : item.priority === "LOW"
+                          ? "border-green-500"
+                          : "border-gray-300"
+                }`}
+              >
+                <div className="">
+                  <div className="px-2 py-2 sm:px-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="flex items-center text-sm leading-6">
+                        <span
+                          className="cursor-help text-red-900"
+                          title={item.zone.name}
+                        >
+                          {item.zone.code}
+                        </span>
+                        <span className="text-md ms-1 text-black">
+                          ({item?.truckSize.name})
+                        </span>
+                        <span className="text-md ms-1 text-green-700">
+                          {item.capacity}m³
+                        </span>
+                      </h3>
+                      {item.isAssign ? (
+                        assign.some(
+                          (assignedItem) => assignedItem.id === item.id,
+                        ) ? (
+                          <MdCheckBoxOutlineBlank
+                            size={22}
+                            className="cursor-pointer text-green-700"
+                            onClick={() =>
+                              handleAssign(item.id, item.capacity || 0)
+                            }
+                          />
+                        ) : (
+                          <MdCheckBox
+                            size={22}
+                            className="cursor-pointer text-green-700"
+                            onClick={() =>
+                              handleAssign(item.id, item.capacity || 0)
+                            }
+                          />
+                        )
+                      ) : assign.some(
+                          (assignedItem) => assignedItem.id === item.id,
+                        ) ? (
+                        <MdCheckBox
+                          size={22}
+                          className="cursor-pointer text-green-700"
+                          onClick={() =>
+                            handleAssign(item.id, item.capacity || 0)
+                          }
+                        />
+                      ) : (
+                        <MdCheckBoxOutlineBlank
+                          size={22}
+                          className="cursor-pointer text-green-700"
+                          onClick={() =>
+                            handleAssign(item.id, item.capacity || 0)
+                          }
+                        />
+                      )}
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className="flex">
+                        <div className="w-[80px] text-xs text-gray-500">
+                          <span className=" text-black">{item.partOfDay}</span>
+                        </div>
+                        <div className="w-[30px] text-xs text-gray-500">
+                          <span
+                            className={`${
+                              item.priority === "CRITICAL"
+                                ? "text-red-900"
+                                : item.priority === "HIGH"
+                                  ? "text-orange-600"
+                                  : item.priority === "MEDIUM"
+                                    ? "text-orange-400"
+                                    : item.priority === "LOW"
+                                      ? "text-lime-600"
+                                      : "text-gray-500"
+                            }`}
+                          >
+                            {item.priority}
+                          </span>
+                        </div>
+                        <div className="w-[90px] text-end text-xs text-gray-500">
+                          <span className=" text-black">{item.phone}</span>
+                        </div>
+                      </div>
+                      <FaRegEye
+                        color="blue"
+                        size={20}
+                        className="cursor-pointer "
+                        onClick={() => handleOpenLocationDrawer(item)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="w-3/5 bg-slate-400 p-[1px] max-[700px]:h-[700px] max-[700px]:w-full">
+            <MapRoute locations={dataLocations || []} />
+          </div>
         </div>
       </div>
+      <Drawer
+        title="Location Details"
+        onClose={handleCloseLocationDrawer}
+        open={openLocationDrawer}
+        size="large"
+      >
+        <div className="px-4">
+          <div className="flex items-center">
+            <FaRegEye
+              color="blue"
+              size={20}
+              className="mb-2 me-2 cursor-pointer"
+              onClick={() => viewLocationMap(locationItem?.phone || "")}
+            />
+            <h2 className="mb-2 text-xl">{locationItem?.locationName}</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">SE:</p>
+              <p className="font-medium">{locationItem?.se}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Phone:</p>
+              <p className="font-medium">{locationItem?.phone}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Truck Size:</p>
+              <p className="font-medium">{locationItem?.truckSize?.name}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Capacity:</p>
+              <p className="font-medium">{locationItem?.capacity} m³</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Part of Day:</p>
+              <p className="font-medium">{locationItem?.partOfDay}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Priority:</p>
+              <p className="font-medium">{locationItem?.priority}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Zone:</p>
+              <p className="font-medium">{locationItem?.zone?.name}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Payment Term:</p>
+              <p className="font-medium">{locationItem?.paymentTerm}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Delivery Date:</p>
+              <p className="font-medium">{locationItem?.deliveryDate}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Assigned:</p>
+              <p className="font-medium">
+                {locationItem?.isAssign ? "Yes" : "No"}
+              </p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">
+                Truck Size Cubic Capacity:
+              </p>
+              <p className="font-medium">
+                {locationItem?.truckSize?.containerCubic} m³
+              </p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Latitude:</p>
+              <p className="font-medium">{locationItem?.latitude}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Longitude:</p>
+              <p className="font-medium">{locationItem?.longitude}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Document Type:</p>
+              <p className="font-medium">{locationItem?.documentType}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Document Number:</p>
+              <p className="font-medium">{locationItem?.documentNumber}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Document Date:</p>
+              <p className="font-medium">{locationItem?.documentDate}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">SLA:</p>
+              <p className="font-medium">{locationItem?.sla}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Upload Time:</p>
+              <p className="font-medium">{locationItem?.uploaddTime}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Home No:</p>
+              <p className="font-medium">{locationItem?.homeNo}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Street No:</p>
+              <p className="font-medium">{locationItem?.streetNo}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Village:</p>
+              <p className="font-medium">{locationItem?.village}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Sangkat:</p>
+              <p className="font-medium">{locationItem?.sangkat}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Khan:</p>
+              <p className="font-medium">{locationItem?.khan}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Hot Spot:</p>
+              <p className="font-medium">{locationItem?.hotSpot}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Direction:</p>
+              <p className="font-medium">{locationItem?.direction}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Area:</p>
+              <p className="font-medium">{locationItem?.area}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Region:</p>
+              <p className="font-medium">{locationItem?.region}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Division:</p>
+              <p className="font-medium">{locationItem?.division}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Comments:</p>
+              <p className="font-medium">{locationItem?.comments}</p>
+            </div>
+          </div>
+        </div>
+      </Drawer>
+      <Drawer
+        title="Truck Information"
+        onClose={handleCloseTruckDrawer}
+        open={openTruckDrawer}
+        size="large"
+      >
+        <div className="p-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">License Plate:</p>
+              <p className="font-medium">{truckItem?.licensePlate}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Model:</p>
+              <p className="font-medium">{truckItem?.model}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Manufacturer:</p>
+              <p className="font-medium">{truckItem?.manufacturer}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Functioning:</p>
+              <p className="font-medium">{truckItem?.functioning}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Status:</p>
+              <p className="font-medium">{truckItem?.status}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Truck Size:</p>
+              <p className="font-medium">{truckItem?.truckSize?.name}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Fuel Type:</p>
+              <p className="font-medium">{truckItem?.fuel?.name}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Zone:</p>
+              <p className="font-medium">
+                {truckItem?.zone.code}({truckItem?.zone?.name})
+              </p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Warehouse:</p>
+              <p className="font-medium">{truckItem?.warehouse?.name}</p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">Ownership Type:</p>
+              <p className="font-medium">
+                {truckItem?.truckOwnershipType?.name}
+              </p>
+            </div>
+            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
+              <p className="me-2 text-sm text-gray-500">
+                Container Size (Cubic):
+              </p>
+              <p className="font-medium">
+                {truckItem?.truckSize?.containerCubic} m³
+              </p>
+            </div>
+          </div>
+        </div>
+      </Drawer>
       <Modal
-        title={updateId ? "Update" : "Create"}
+        title={"Create"}
         className="font-satoshi"
         open={isModalOpen}
         onOk={handleOk}
         onCancel={handleCancel}
         maskClosable={false}
-        footer
+        footer={null} // Set footer to null if you don't want to display anything there
       >
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="mt-2 text-slate-600">
-            Date<span className="text-red">*</span>
+            File<span className="text-red">*</span>
           </div>
           <input
-            {...register("date", { required: true })}
-            type="date"
-            placeholder="Date"
-            className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 "
+            {...register("file", {
+              required: true,
+              validate: {
+                // Custom validation function
+                isExcel: (value) => {
+                  const allowedExtensions = [
+                    "application/vnd.ms-excel",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                  ];
+                  return (
+                    (value &&
+                      value[0] &&
+                      allowedExtensions.includes(value[0].type)) ||
+                    "Please upload a valid Excel file."
+                  );
+                },
+              },
+            })}
+            type="file"
+            className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3 text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2"
           />
-          {errors.date && (
+          {errors.file && (
             <span className="text-sm text-red-800">
-              Please input valid date.
+              {errors.file.message?.toString()}
             </span>
           )}
           <div className="flex w-full items-center justify-end">
@@ -318,11 +1250,34 @@ const EachRouteComponent = () => {
               className="me-1 mt-5 rounded-md bg-primary px-4 py-2 text-white"
               disabled={isPendingCreate}
             >
-              {isPendingCreate ? "Submiting..." : "Create"}
+              {isPendingCreate ? "Submitting..." : "Create"}
             </button>
           </div>
         </form>
       </Modal>
+      {showButton && (
+        <button
+          className="flex w-[220px] justify-center rounded-md border-[1px] bg-gray-50 p-1 px-2 text-black shadow-4"
+          style={{
+            position: "absolute",
+            top: position.y,
+            left: position.x,
+          }}
+        >
+          <div
+            onClick={() => (
+              setLocationTruckByDateId(rightClickTruckByDateId),
+              setLocationIsAssign("true")
+            )}
+            className="p-1 text-sm text-primary hover:underline"
+          >
+            View assigned locations
+          </div>
+          <div className="p-1" onClick={handleClick}>
+            <CgClose size={20} color="red" />
+          </div>
+        </button>
+      )}
     </section>
   );
 };

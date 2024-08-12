@@ -11,7 +11,12 @@ export interface ResponseAll {
 export interface DRCDate {
   id?: number;
   date: Date;
+  _count?: Count;
   GroupLocation?: object[];
+}
+
+interface Count {
+  Location: number;
 }
 
 export const getAllDRCDate = async (

@@ -1,10 +1,11 @@
 import EachRouteComponent from "@/components/resources/admin/eachRoute/EachRouteComponent";
 import React from "react";
 
-const page = () => {
+const page = ({ params }: any) => {
+  console.log(params);
   return (
     <main>
-      <EachRouteComponent />
+      <EachRouteComponent id={params.routeId} />
     </main>
   );
 };

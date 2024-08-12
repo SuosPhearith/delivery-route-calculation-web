@@ -11,6 +11,12 @@
     /* font-family: 'Khmer OS', Arial, sans-serif !important; */
     font-family: "Siemreap", sans-serif !important;
 }
+/* .ant-select-item-option-content{
+    font-size: 7px !important;
+} */
+.custom-select .ant-select-selector .ant-select-selection-item {
+    font-size: 12px; /* Adjust font size */
+}
 
 .max-lines-1 {
     overflow: hidden;

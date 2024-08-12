@@ -210,13 +210,13 @@ const RouteComponent = () => {
                 </div>
                 <div className="w-1/4">
                   <h4 className="flex items-center text-black dark:text-gray-200">
-                    <div className="me-2">{item.GroupLocation?.length}</div>
+                    <div className="me-2">{item._count?.Location}</div>
                     <RiMapPinLine className="mb-1" />
                   </h4>
                 </div>
                 <div className="w-1/4">
                   <h4 className="float-end flex text-black dark:text-gray-200">
-                    <Link href={`route/1`}>
+                    <Link href={`route/${item.id}`}>
                       <FaRegEye
                         size={18}
                         className="mx-1 cursor-pointer"

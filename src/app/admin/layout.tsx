@@ -63,7 +63,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, [pathname]);
 
   // Define routes that don't require a layout
-  const noLayoutRoutes = ["/admin/direction/[id]"];
+  const noLayoutRoutes = ["/admin/direction/[id]", "/admin/route/[id]"];
 
   const isNoLayoutRoute = noLayoutRoutes.some((route) => {
     const regex = new RegExp(route.replace("[id]", ".*"));

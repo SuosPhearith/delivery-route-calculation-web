@@ -82,6 +82,7 @@ async function apiRequest(
 
 async function refreshToken() {
   try {
+    alert("Called refresh token");
     //::==>> make request to get new accessToken by using refreshToken
     const newToken = await axios.post(`${baseUrl}/keycloak/auth/refresh`, {
       //::==>> get refreshToken from localstorage
