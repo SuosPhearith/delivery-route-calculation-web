@@ -3,6 +3,7 @@ import {
   assignTruck,
   CreateDrc,
   createDrc,
+  deleteLocation,
   getAllLocations,
   getAllTrucksByDate,
   getAllZonesRoute,
@@ -10,6 +11,7 @@ import {
   Truck,
   TruckByDate,
   unassignTruck,
+  updateLocationPartOfDay,
 } from "@/api/eachRoute";
 import {
   getAllTruckAssistants,
@@ -35,12 +37,13 @@ import {
   Space,
 } from "antd";
 import Link from "next/link";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   FaCheckSquare,
   FaListUl,
   FaLongArrowAltRight,
   FaRegEye,
+  FaRegTrashAlt,
 } from "react-icons/fa";
 import { IoChevronBackCircle } from "react-icons/io5";
 import { MdAltRoute, MdCheckBox, MdCheckBoxOutlineBlank } from "react-icons/md";
@@ -49,13 +52,11 @@ import { LuSearch } from "react-icons/lu";
 import dynamic from "next/dynamic";
 import { GrPowerReset } from "react-icons/gr";
 import { GoLink, GoUnlink } from "react-icons/go";
-import { TiArrowRightThick } from "react-icons/ti";
-import { FaCircleCheck } from "react-icons/fa6";
-import { FiPlusCircle } from "react-icons/fi";
 import { GiCancel } from "react-icons/gi";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { IoMdAddCircleOutline, IoMdCloseCircleOutline } from "react-icons/io";
 import { CgClose } from "react-icons/cg";
+import { CiEdit } from "react-icons/ci";
 // Dynamically import Map component with no SSR
 const MapRoute = dynamic(() => import("../MapRoute"), {
   ssr: false,
@@ -82,6 +83,8 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
   const queryClient = useQueryClient();
   const [api, contextHolder] = notification.useNotification();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [lastPartOfDay, setLastPartOfDay] = useState("");
+
   const openNotification = (
     message: string = "Default",
     description: string = "Successfully",
@@ -121,19 +124,85 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [rightClickTruckByDateId, setRightClickTruckByDateId] = useState("");
 
-  const handleRightClick = (event: any, id: string) => {
+  const handleRightClick = (event: any, id: string, item: any) => {
     event.preventDefault();
     setPosition({ x: event.clientX, y: event.clientY });
+    setTruckItem(item);
     setRightClickTruckByDateId(id);
     setShowButton(true);
   };
 
   const handleClick = () => {
+    setLocationIsAssign("false");
     setShowButton(false); // Hide the button when it's clicked
     setRightClickTruckByDateId("");
     setLocationTruckByDateId("");
-    setLocationIsAssign("false");
   };
+
+  // delete location
+  const {
+    mutateAsync: deleteLocationMutaion,
+    isPending: isPendingDeleteLocation,
+  } = useMutation({
+    mutationFn: deleteLocation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allLocations"] });
+      queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+      // message.success("Direction created successfully");
+      openNotification("Create Drc", "Drc Created successfully");
+    },
+    onError: (error: any) => {
+      message.error(error);
+    },
+  });
+  const handleDeleteLocation = async (
+    latitude: number,
+    longitude: number,
+    deliveryRouteCalculationDateId: number,
+  ) => {
+    await deleteLocationMutaion({
+      latitude,
+      longitude,
+      deliveryRouteCalculationDateId,
+    });
+  };
+  // end delete location
+
+  // edit part of day
+  const [partOfDayModal, setPartOfDayModal] = useState(false);
+  const [currentPartOfDay, setCurrentPartOfDay] = useState("");
+  const [partOfDayUpdatedId, setPartOfDayUpdatedId] = useState<number>();
+  const handleUpdatePartOfDay = (partOfDay: string, id: number) => {
+    setPartOfDayUpdatedId(id);
+    setCurrentPartOfDay(partOfDay);
+    setPartOfDayModal(true);
+  };
+  const handleCancelPartOfDayModal = () => {
+    setPartOfDayUpdatedId(undefined);
+    setCurrentPartOfDay("");
+    setPartOfDayModal(false);
+  };
+  const { mutateAsync: updatePartOfDayMutate } = useMutation({
+    mutationFn: updateLocationPartOfDay,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allLocations"] });
+      queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+      // message.success("Direction created successfully");
+      openNotification("Update Drc", "Drc Updated successfully");
+      handleCancelPartOfDayModal();
+    },
+    onError: (error: any) => {
+      message.error(error);
+    },
+  });
+  const updatePartOfDay = async () => {
+    // console.log(partOfDayUpdatedId + " --" + currentPartOfDay);
+    await updatePartOfDayMutate({
+      id: partOfDayUpdatedId || 0,
+      partOfDay: currentPartOfDay,
+    });
+  };
+  // end edit part of day
 
   // create
   const { mutateAsync: createMutaion, isPending: isPendingCreate } =
@@ -193,9 +262,17 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     });
   };
   // assign to truck
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const assignLocationsToTruck = async (truckByDateId: number) => {
+    if (assign.length <= 0) {
+      return message.error("Please select locations");
+    }
     // Extracting the array of ids from the assign array
     const deliveryRouteCalculationDateIds = assign.map((item) => item.id);
+
+    // setIsModalVisible(true);
+    // check confirm before go throw in 2 condition : out of truck capacity, and assign not same truck size
+    // rith
 
     await mutateAsync({
       truckByDateId,
@@ -223,6 +300,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     mutationFn: assignTruck,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allLocations"] });
+      queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
       // message.success("Ownership created successfully");
       openNotification("Assigned", "Locations Unassigned successfully");
       setAssign([]);
@@ -236,6 +314,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
       mutationFn: unassignTruck,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["allLocations"] });
+        queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
         // message.success("Ownership created successfully");
         openNotification("Unassigned", "Locations Assigned successfully");
         setAssign([]);
@@ -260,13 +339,16 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     setOpenLocationDrawer(false);
   };
 
-  const handleOpenTruckDrawer = (item: Truck) => {
-    setTruckItem(item);
+  const handleOpenTruckDrawer = () => {
     setOpenTruckDrawer(true);
   };
   const handleCloseTruckDrawer = () => {
     setTruckItem(null);
     setOpenTruckDrawer(false);
+    setShowButton(false); // Hide the button when it's clicked
+    setRightClickTruckByDateId("");
+    setLocationTruckByDateId("");
+    setLocationIsAssign("false");
   };
 
   const viewLocationMap = (location: string) => {
@@ -471,6 +553,9 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     setAssign([]);
     setLocationIsAssign(value);
   };
+
+  const countByPartOfDay = (dataLocations: any[], partOfDay: any) =>
+    dataLocations.filter((item) => item.partOfDay === partOfDay).length;
 
   return (
     <section className="">
@@ -818,178 +903,309 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
         </div>
 
         <div className="mt-2 flex justify-between max-[700px]:flex-col">
-          <div className="h-[80vh] w-1/5 min-w-[300px] overflow-y-auto p-1 pe-3 max-[700px]:flex max-[700px]:h-fit max-[700px]:w-full max-[700px]:overflow-x-auto max-[700px]:overflow-y-hidden">
+          <div className="h-[80vh] w-2/6 min-w-[300px] overflow-y-auto p-1 pe-3 max-[700px]:flex max-[700px]:h-fit max-[700px]:w-full max-[700px]:overflow-x-auto max-[700px]:overflow-y-hidden">
+            <div className="text-md">Trucks: {data?.length}</div>
             {data?.map((item) => (
               <div
                 onContextMenu={() =>
-                  handleRightClick(event, item.id.toString())
+                  handleRightClick(event, item.id.toString(), item.truck)
                 }
+                onClick={() => assignLocationsToTruck(item.id)}
                 key={item.id}
-                className="mx-auto mb-2  max-w-sm overflow-hidden border-[1px] border-gray-300 bg-white shadow max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[300px] sm:rounded-md"
+                className="mx-auto mb-2 max-w-sm  cursor-pointer overflow-hidden border-[1px] border-gray-300 bg-white shadow hover:border-primary hover:bg-slate-200 max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[300px] sm:rounded-md"
               >
                 <div className="">
                   <div className="px-2 py-2 sm:px-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="flex items-center text-sm  leading-6 text-primary">
+                      <div className="flex items-center text-sm  leading-6 text-primary">
                         {item.truck.licensePlate}
-                        <span className="text-md ms-1 text-black">
-                          ({item?.truck?.truckSize?.name})
-                        </span>
-                        <span className="text-md ms-1 text-green-700">
-                          {item.status}
-                        </span>
-                      </h3>
-                      <FiPlusCircle
-                        size={20}
-                        className="cursor-pointer text-green-700"
-                        onClick={() => assignLocationsToTruck(item.id)}
-                      />
-                    </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <div className="flex">
-                        <div className="me-2 w-[100px] text-sm text-gray-500">
-                          <span className="text-xs">Zone:</span>
-                          <span
-                            className="ms-1 cursor-help text-red-900"
-                            title={item.truck.zone.name}
-                          >
-                            {item.truck.zone.code}
-                          </span>
-                        </div>
-                        <div className="me-2 ms-1 text-sm text-gray-500">
-                          <span className="text-xs">Capacity:</span>
-                          <span className="ms-1 text-xs text-green-600">
-                            {item.capacity.toFixed(2)}m³
-                          </span>
-                        </div>
                       </div>
-                      <FaRegEye
-                        color="blue"
-                        size={20}
-                        className="cursor-pointer"
-                        onClick={() => handleOpenTruckDrawer(item.truck)}
-                      />
+                      <div className="text-md ms-1  text-sm  text-black">
+                        {item?.truck?.truckSize?.name}
+                      </div>
+                      <div className="text-md ms-1 text-sm text-green-700">
+                        {item.status}
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="h-[80vh] w-1/5 min-w-[300px] overflow-y-auto p-1 pe-3 max-[700px]:flex max-[700px]:h-fit max-[700px]:w-full max-[700px]:overflow-x-auto max-[700px]:overflow-y-hidden">
-            {dataLocations?.map((item) => (
-              <div
-                // onClick={() => handleAssign(item.id, item.capacity || 0)}
-                // onDoubleClick={() => handleOpenLocationDrawer(item)}
-                key={item.id}
-                className={`mx-auto mb-2 max-w-sm overflow-hidden border-[1px] bg-white shadow-md max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[300px] sm:rounded-lg ${
-                  item.priority === "CRITICAL"
-                    ? "border-red-500"
-                    : item.priority === "HIGH"
-                      ? "border-orange-500"
-                      : item.priority === "MEDIUM"
-                        ? "border-orange-300"
-                        : item.priority === "LOW"
-                          ? "border-green-500"
-                          : "border-gray-300"
-                }`}
-              >
-                <div className="">
-                  <div className="px-2 py-2 sm:px-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="flex items-center text-sm leading-6">
+                    <div className="my-1 flex items-center justify-between">
+                      <div className="text-xs">
+                        <span className="text-blue-500">
+                          M({item.partOfDays?.MORNING?.number_of_delivery || 0}
+                          ):
+                        </span>
                         <span
-                          className="cursor-help text-red-900"
-                          title={item.zone.name}
+                          className={
+                            item.capacity >
+                            (item.partOfDays?.MORNING?.total_capacity || 0)
+                              ? "text-primary"
+                              : "text-red-800"
+                          }
                         >
-                          {item.zone.code}
-                        </span>
-                        <span className="text-md ms-1 text-black">
-                          ({item?.truckSize.name})
-                        </span>
-                        <span className="text-md ms-1 text-green-700">
-                          {item.capacity}m³
-                        </span>
-                      </h3>
-                      {item.isAssign ? (
-                        assign.some(
-                          (assignedItem) => assignedItem.id === item.id,
-                        ) ? (
-                          <MdCheckBoxOutlineBlank
-                            size={22}
-                            className="cursor-pointer text-green-700"
-                            onClick={() =>
-                              handleAssign(item.id, item.capacity || 0)
-                            }
-                          />
-                        ) : (
-                          <MdCheckBox
-                            size={22}
-                            className="cursor-pointer text-green-700"
-                            onClick={() =>
-                              handleAssign(item.id, item.capacity || 0)
-                            }
-                          />
-                        )
-                      ) : assign.some(
-                          (assignedItem) => assignedItem.id === item.id,
-                        ) ? (
-                        <MdCheckBox
-                          size={22}
-                          className="cursor-pointer text-green-700"
-                          onClick={() =>
-                            handleAssign(item.id, item.capacity || 0)
-                          }
-                        />
-                      ) : (
-                        <MdCheckBoxOutlineBlank
-                          size={22}
-                          className="cursor-pointer text-green-700"
-                          onClick={() =>
-                            handleAssign(item.id, item.capacity || 0)
-                          }
-                        />
-                      )}
-                    </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <div className="flex">
-                        <div className="w-[80px] text-xs text-gray-500">
-                          <span className=" text-black">{item.partOfDay}</span>
-                        </div>
-                        <div className="w-[30px] text-xs text-gray-500">
-                          <span
-                            className={`${
-                              item.priority === "CRITICAL"
-                                ? "text-red-900"
-                                : item.priority === "HIGH"
-                                  ? "text-orange-600"
-                                  : item.priority === "MEDIUM"
-                                    ? "text-orange-400"
-                                    : item.priority === "LOW"
-                                      ? "text-lime-600"
-                                      : "text-gray-500"
-                            }`}
-                          >
-                            {item.priority}
+                          <span>
+                            {item.partOfDays?.MORNING?.total_capacity !==
+                            undefined
+                              ? `${item.partOfDays.MORNING.total_capacity.toFixed(2)}m³`
+                              : "N/A"}
                           </span>
-                        </div>
-                        <div className="w-[90px] text-end text-xs text-gray-500">
-                          <span className=" text-black">{item.phone}</span>
-                        </div>
+                          {/* /
+                          {Math.ceil(
+                            (item.partOfDays?.MORNING?.total_capacity || 0) /
+                              item.capacity,
+                          )} */}
+                        </span>
                       </div>
-                      <FaRegEye
-                        color="blue"
-                        size={20}
-                        className="cursor-pointer "
-                        onClick={() => handleOpenLocationDrawer(item)}
-                      />
+                      <div className="text-xs">
+                        <span className="text-green-500">
+                          A(
+                          {item.partOfDays?.AFTERNOON?.number_of_delivery || 0}
+                          ):
+                        </span>
+                        <span
+                          className={
+                            item.capacity >
+                            (item.partOfDays?.AFTERNOON?.total_capacity || 0)
+                              ? "text-primary"
+                              : "text-red-800"
+                          }
+                        >
+                          <span>
+                            {item.partOfDays?.AFTERNOON?.total_capacity !==
+                            undefined
+                              ? `${item.partOfDays.AFTERNOON.total_capacity.toFixed(2)} m³`
+                              : "N/A"}
+                          </span>
+                        </span>
+                      </div>
+                      <div className="text-xs">
+                        <span className="text-orange-500">
+                          E({item.partOfDays?.EVENING?.number_of_delivery || 0}
+                          ):
+                        </span>
+                        <span
+                          className={
+                            item.capacity >
+                            (item.partOfDays?.EVENING?.total_capacity || 0)
+                              ? "text-primary"
+                              : "text-red-800"
+                          }
+                        >
+                          <span>
+                            {item.partOfDays?.EVENING?.total_capacity !==
+                            undefined
+                              ? `${item.partOfDays.EVENING.total_capacity.toFixed(2)} m³`
+                              : "N/A"}
+                          </span>
+                        </span>
+                      </div>
+                      <div className="text-xs">
+                        <span className="text-purple-500">
+                          N({item.partOfDays?.NIGHT?.number_of_delivery || 0}):
+                        </span>
+                        <span
+                          className={
+                            item.capacity >
+                            (item.partOfDays?.NIGHT?.total_capacity || 0)
+                              ? "text-primary"
+                              : "text-red-800"
+                          }
+                        >
+                          <span>
+                            {item.partOfDays?.NIGHT?.total_capacity !==
+                            undefined
+                              ? `${item.partOfDays.NIGHT.total_capacity.toFixed(2)} m³`
+                              : "N/A"}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className=" w-[100px] text-sm text-gray-500">
+                        <span className="text-xs">Zone:</span>
+                        <span
+                          className="ms-1 cursor-help text-xs text-red-900"
+                          title={item.truck.zone.name}
+                        >
+                          {item.truck.zone.code}
+                        </span>
+                      </div>
+                      <div className=" ms-1 text-sm text-gray-500">
+                        <span className="text-xs">Locations:</span>
+                        <span className="ms-1 text-xs text-black">
+                          {item.AssignLocationToTruck?.length}
+                        </span>
+                      </div>
+                      <div className=" ms-1 text-sm text-gray-500">
+                        <span className="text-xs">Capacity:</span>
+                        <span className="ms-1 text-xs text-green-600">
+                          {item.capacity.toFixed(2)}m³
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          <div className="w-3/5 bg-slate-400 p-[1px] max-[700px]:h-[700px] max-[700px]:w-full">
-            <MapRoute locations={dataLocations || []} />
+          <div className="h-[80vh] w-2/6 min-w-[300px] overflow-y-auto p-1 pe-3 max-[700px]:flex max-[700px]:h-fit max-[700px]:w-full max-[700px]:overflow-x-auto max-[700px]:overflow-y-hidden">
+            <div className="text-md">Locations: {dataLocations?.length}</div>
+            {dataLocations?.map((item, index) => {
+              const previousItem = index > 0 ? dataLocations[index - 1] : null;
+              return (
+                <div key={item.id}>
+                  {item.partOfDay !== previousItem?.partOfDay ? (
+                    <div className="flex w-full items-center justify-between text-xs text-purple-700">
+                      <div className="h-[1px] w-[100px] bg-purple-700"></div>
+                      <div>
+                        {item.partOfDay} :{" "}
+                        {countByPartOfDay(dataLocations, item.partOfDay)}
+                      </div>
+                      <div className="h-[1px] w-[100px] bg-purple-700"></div>
+                    </div>
+                  ) : (
+                    ""
+                  )}
+                  <div
+                    // onClick={() => handleAssign(item.id, item.capacity || 0)}
+                    // onDoubleClick={() => handleOpenLocationDrawer(item)}
+                    className={`mx-auto mb-2 max-w-sm overflow-hidden border-[1px] bg-white shadow-md max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[300px] sm:rounded-lg ${
+                      item.priority === "CRITICAL"
+                        ? "border-red-500"
+                        : item.priority === "HIGH"
+                          ? "border-orange-500"
+                          : item.priority === "MEDIUM"
+                            ? "border-orange-300"
+                            : item.priority === "LOW"
+                              ? "border-green-500"
+                              : "border-gray-300"
+                    }`}
+                  >
+                    <div className="">
+                      <div className="px-2 py-2 sm:px-3">
+                        <div className="flex items-center justify-between">
+                          <h3 className="flex items-center text-sm leading-6">
+                            <span
+                              className="cursor-help text-red-900"
+                              title={item.zone.name}
+                            >
+                              {item.zone.code}
+                            </span>
+                            <span className="text-md ms-1 text-black">
+                              ({item?.truckSize.name})
+                            </span>
+                            <span className="text-md ms-1 text-green-700">
+                              {item.capacity?.toFixed(3)}m³
+                            </span>
+                          </h3>
+                          {item.isAssign ? (
+                            assign.some(
+                              (assignedItem) => assignedItem.id === item.id,
+                            ) ? (
+                              <MdCheckBoxOutlineBlank
+                                size={22}
+                                className="cursor-pointer text-green-700"
+                                onClick={() =>
+                                  handleAssign(item.id, item.capacity || 0)
+                                }
+                              />
+                            ) : (
+                              <MdCheckBox
+                                size={22}
+                                className="cursor-pointer text-green-700"
+                                onClick={() =>
+                                  handleAssign(item.id, item.capacity || 0)
+                                }
+                              />
+                            )
+                          ) : assign.some(
+                              (assignedItem) => assignedItem.id === item.id,
+                            ) ? (
+                            <MdCheckBox
+                              size={22}
+                              className="cursor-pointer text-green-700"
+                              onClick={() =>
+                                handleAssign(item.id, item.capacity || 0)
+                              }
+                            />
+                          ) : (
+                            <MdCheckBoxOutlineBlank
+                              size={22}
+                              className="cursor-pointer text-green-700"
+                              onClick={() =>
+                                handleAssign(item.id, item.capacity || 0)
+                              }
+                            />
+                          )}
+                        </div>
+                        <div className="mt-2 flex items-center justify-between">
+                          <div className="flex w-[110px] items-center text-xs text-gray-500">
+                            <div className=" text-black">{item.partOfDay}</div>
+                            <CiEdit
+                              onClick={() =>
+                                handleUpdatePartOfDay(item.partOfDay, item.id)
+                              }
+                              size={15}
+                              color="blue"
+                              className="cursor-pointer"
+                            />
+                          </div>
+                          <div className="w-[30px] text-xs text-gray-500">
+                            <span
+                              className={`${
+                                item.priority === "CRITICAL"
+                                  ? "text-red-900"
+                                  : item.priority === "HIGH"
+                                    ? "text-orange-600"
+                                    : item.priority === "MEDIUM"
+                                      ? "text-orange-400"
+                                      : item.priority === "LOW"
+                                        ? "text-lime-600"
+                                        : "text-gray-500"
+                              }`}
+                            >
+                              {item.priority}
+                            </span>
+                          </div>
+                          <div className="w-[100px] text-end text-xs text-gray-500">
+                            <span className=" text-black">{item.phone}</span>
+                          </div>
+                          <Popconfirm
+                            placement="rightTop"
+                            title="Delete location"
+                            description="Are you sure?"
+                            onConfirm={() =>
+                              handleDeleteLocation(
+                                item.latitude,
+                                item.longitude,
+                                item.deliveryRouteCalculationDateId,
+                              )
+                            }
+                            okText="Yes"
+                            cancelText="No"
+                          >
+                            <FaRegTrashAlt
+                              color="red"
+                              size={15}
+                              className="cursor-pointer"
+                            />
+                          </Popconfirm>
+
+                          <FaRegEye
+                            color="blue"
+                            size={20}
+                            className="cursor-pointer "
+                            onClick={() => handleOpenLocationDrawer(item)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="w-4/5 bg-slate-400 p-[1px] max-[700px]:h-[700px] max-[700px]:w-full">
+            {/* <MapRoute locations={dataLocations || []} /> */}
           </div>
         </div>
       </div>
@@ -1174,7 +1390,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
             <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
               <p className="me-2 text-sm text-gray-500">Zone:</p>
               <p className="font-medium">
-                {truckItem?.zone.code}({truckItem?.zone?.name})
+                {truckItem?.zone?.code}({truckItem?.zone?.name})
               </p>
             </div>
             <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
@@ -1255,29 +1471,102 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
           </div>
         </form>
       </Modal>
+      <Modal
+        title={"Update Part of day"}
+        className="font-satoshi"
+        open={partOfDayModal}
+        // onOk={handleOk}
+        onCancel={handleCancelPartOfDayModal}
+        maskClosable={false}
+        footer={null}
+      >
+        <div className="w-full">
+          <Select
+            showSearch
+            className="w-full"
+            defaultValue=""
+            value={currentPartOfDay}
+            optionFilterProp="label"
+            onChange={(value) => setCurrentPartOfDay(value)}
+            options={[
+              {
+                value: "MORNING",
+                label: "MORNING",
+              },
+              {
+                value: "AFTERNOON",
+                label: "AFTERNOON",
+              },
+              {
+                value: "EVENING",
+                label: "EVENING",
+              },
+              {
+                value: "NIGHT",
+                label: "NIGHT",
+              },
+            ]}
+          />
+          <div className="flex w-full items-center justify-end">
+            <div
+              onClick={handleCancelPartOfDayModal}
+              className="me-1 mt-5 cursor-pointer rounded-md bg-blue-400 px-4 py-2 text-white"
+            >
+              Cancel
+            </div>
+            <button
+              onClick={updatePartOfDay}
+              className="me-1 mt-5 rounded-md bg-primary px-4 py-2 text-white"
+            >
+              Update
+            </button>
+          </div>
+        </div>
+      </Modal>
       {showButton && (
-        <button
-          className="flex w-[220px] justify-center rounded-md border-[1px] bg-gray-50 p-1 px-2 text-black shadow-4"
+        <div
+          className="flex w-[140px] flex-col rounded-md border-[1px] bg-slate-50 p-1 px-2 text-black shadow-4"
           style={{
             position: "absolute",
             top: position.y,
             left: position.x,
           }}
         >
-          <div
-            onClick={() => (
-              setLocationTruckByDateId(rightClickTruckByDateId),
-              setLocationIsAssign("true")
-            )}
-            className="p-1 text-sm text-primary hover:underline"
-          >
-            View assigned locations
+          <div className="text-s flex items-center justify-between p-1">
+            <div
+              className="cursor-pointer text-sm text-primary hover:underline"
+              onClick={() => (
+                setLocationTruckByDateId(rightClickTruckByDateId),
+                setLocationIsAssign("true")
+              )}
+            >
+              See locations
+            </div>
+            <div className="p-1" onClick={handleClick}>
+              <CgClose size={20} color="red" />
+            </div>
           </div>
-          <div className="p-1" onClick={handleClick}>
-            <CgClose size={20} color="red" />
+          <div className="flex items-center justify-between p-1 text-sm ">
+            <div
+              onClick={() => handleOpenTruckDrawer()}
+              className="cursor-pointer text-primary hover:underline"
+            >
+              See detail
+            </div>
+            <div className="p-1">{/* <CgClose size={20} color="red" /> */}</div>
           </div>
-        </button>
+        </div>
       )}
+      <Modal
+        title="Basic Modal"
+        open={isModalVisible}
+        onOk={() => setIsModalVisible(false)}
+        onCancel={() => setIsModalVisible(false)}
+      >
+        <p>Some contents...</p>
+        <p>Some contents...</p>
+        <p>Some contents...</p>
+      </Modal>
     </section>
   );
 };

@@ -31,6 +31,13 @@ export interface TruckByDate {
   truckId: number;
   deliveryRouteCalculationDateId: number;
   truck: Truck;
+  partOfDays?: {
+    [key: string]: {
+      number_of_delivery: number;
+      total_capacity: number;
+    };
+  } | null;
+  AssignLocationToTruck?: any[];
 }
 
 export const getAllTrucksByDate = async (
@@ -261,6 +268,54 @@ export const createDrc = async (data: CreateDrc) => {
       `/drc-date/create-drc/${DeliveryRouteCalculationDateId}`,
       formData,
     );
+  } catch (error) {
+    throw error;
+  }
+};
+
+export interface DeleteLocation {
+  deliveryRouteCalculationDateId: number;
+  latitude: number;
+  longitude: number;
+}
+
+export const deleteLocation = async (data: DeleteLocation) => {
+  try {
+    // Destructur
+    const { deliveryRouteCalculationDateId, latitude, longitude } = data;
+    // Make API request with FormData
+    const response = await apiRequest(
+      "DELETE",
+      `/drc-date/delete-locations-drc/route`,
+      {
+        deliveryRouteCalculationDateId,
+        latitude,
+        longitude,
+      },
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export interface UpdatePartOfDay {
+  id: number;
+  partOfDay: string;
+}
+export const updateLocationPartOfDay = async (data: UpdatePartOfDay) => {
+  try {
+    // Destructur
+    const { partOfDay, id } = data;
+    // Make API request with FormData
+    const response = await apiRequest(
+      "PATCH",
+      `/drc-date/update-location-part-of-day/${id}`,
+      {
+        partOfDay,
+      },
+    );
+    return response;
   } catch (error) {
     throw error;
   }

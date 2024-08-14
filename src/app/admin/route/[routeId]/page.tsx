@@ -2,7 +2,6 @@ import EachRouteComponent from "@/components/resources/admin/eachRoute/EachRoute
 import React from "react";
 
 const page = ({ params }: any) => {
-  console.log(params);
   return (
     <main>
       <EachRouteComponent id={params.routeId} />
