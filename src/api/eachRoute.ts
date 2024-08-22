@@ -1,4 +1,5 @@
 import apiRequest from "@/services/apiRequest";
+import { Moment } from "moment";
 
 // Define the structure for a Truck object
 export interface Truck {
@@ -130,6 +131,9 @@ export interface Location {
   deliveryRouteCalculationDateId: number;
   zone: any;
   truckSize: any;
+  isSplit?: boolean;
+  code?: string;
+  Requirement?: any[];
 }
 
 export const getAllLocations = async (
@@ -277,12 +281,20 @@ export interface DeleteLocation {
   deliveryRouteCalculationDateId: number;
   latitude: number;
   longitude: number;
+  partOfDay: string;
+  priority: string;
 }
 
 export const deleteLocation = async (data: DeleteLocation) => {
   try {
     // Destructur
-    const { deliveryRouteCalculationDateId, latitude, longitude } = data;
+    const {
+      deliveryRouteCalculationDateId,
+      latitude,
+      longitude,
+      partOfDay,
+      priority,
+    } = data;
     // Make API request with FormData
     const response = await apiRequest(
       "DELETE",
@@ -291,6 +303,8 @@ export const deleteLocation = async (data: DeleteLocation) => {
         deliveryRouteCalculationDateId,
         latitude,
         longitude,
+        partOfDay,
+        priority,
       },
     );
     return response;
@@ -313,6 +327,127 @@ export const updateLocationPartOfDay = async (data: UpdatePartOfDay) => {
       `/drc-date/update-location-part-of-day/${id}`,
       {
         partOfDay,
+      },
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAllWarehousesRoute = async () => {
+  try {
+    return await apiRequest("GET", "/drc-date/get-all-warehouses/route");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAllCaseNames = async () => {
+  try {
+    return await apiRequest("GET", "/drc-date/get-all-case-name/route");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export enum Priority {
+  CRITICAL = "CRITICAL",
+  HIGH = "HIGH",
+  MEDIUM = "MEDIUM",
+  LOW = "LOW",
+  TRIVIAL = "TRIVIAL",
+}
+
+export enum PartOfDay {
+  MORNING = "MORNING", // 5am - 12pm
+  AFTERNOON = "AFTERNOON", // 12pm - 5pm
+  EVENING = "EVENING", // 5pm - 9pm
+  NIGHT = "NIGHT", // 9pm - 5am
+}
+
+enum Flag {
+  INF = "INF", // information_change
+  CAP = "CAP", // capacity_change
+  DEL = "DEL", // delete
+}
+
+export interface LocationCreate {
+  id: number;
+  zoneId?: number;
+  truckSizeId?: number;
+  documentType?: string;
+  documentNumber?: string;
+  documentDate?: string;
+  sla?: string;
+  uploaddTime?: string;
+  latitude: number;
+  longitude: number;
+  locationName: string;
+  phone: string;
+  se: string;
+  homeNo?: string;
+  streetNo?: string;
+  village?: string;
+  sangkat?: string;
+  khan?: string;
+  hotSpot?: string;
+  direction?: string;
+  area?: string;
+  region?: string;
+  division?: string;
+  deliveryDate: string;
+  paymentTerm?: string;
+  comments?: string;
+  flag?: Flag;
+  code?: string;
+  priority: Priority;
+  partOfDay: PartOfDay;
+  deliveryRouteCalculationDateId: number;
+  capacity?: number;
+  isAssign: boolean;
+}
+
+export const createNewLocation = async (data: LocationCreate) => {
+  try {
+    // Make API request with FormData
+    const response = await apiRequest(
+      "POST",
+      `/drc-date/create-single-location/route/${data.id}`,
+      {
+        ...data,
+      },
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateNewLocation = async (data: LocationCreate) => {
+  try {
+    // Make API request with FormData
+    const response = await apiRequest(
+      "PATCH",
+      `/drc-date/update-single-location/route/${data.id}`,
+      {
+        ...data,
+      },
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateCapNewLocation = async (data: LocationCreate) => {
+  try {
+    // Make API request with FormData
+    const response = await apiRequest(
+      "PATCH",
+      `/drc-date/update-cap-single-location/route/${data.id}`,
+      {
+        ...data,
       },
     );
     return response;

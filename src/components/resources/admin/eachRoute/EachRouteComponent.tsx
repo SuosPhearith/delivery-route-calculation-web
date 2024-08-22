@@ -3,16 +3,25 @@ import {
   assignTruck,
   CreateDrc,
   createDrc,
+  createNewLocation,
   deleteLocation,
+  getAllCaseNames,
   getAllLocations,
   getAllTrucksByDate,
+  getAllWarehousesRoute,
   getAllZonesRoute,
   Location,
+  LocationCreate,
+  PartOfDay,
+  Priority,
   Truck,
   TruckByDate,
   unassignTruck,
+  updateCapNewLocation,
   updateLocationPartOfDay,
+  updateNewLocation,
 } from "@/api/eachRoute";
+import moment from "moment";
 import {
   getAllTruckAssistants,
   getAllTruckDrivers,
@@ -25,7 +34,9 @@ import {
 import Header from "@/components/Header";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Button,
   Card,
+  DatePicker,
   Drawer,
   Input,
   InputNumber,
@@ -46,17 +57,27 @@ import {
   FaRegTrashAlt,
 } from "react-icons/fa";
 import { IoChevronBackCircle } from "react-icons/io5";
-import { MdAltRoute, MdCheckBox, MdCheckBoxOutlineBlank } from "react-icons/md";
+import {
+  MdAltRoute,
+  MdCheckBox,
+  MdCheckBoxOutlineBlank,
+  MdOutlineCheckBoxOutlineBlank,
+} from "react-icons/md";
 import Skeleton from "../../components/Skeleton";
 import { LuSearch } from "react-icons/lu";
 import dynamic from "next/dynamic";
 import { GrPowerReset } from "react-icons/gr";
 import { GoLink, GoUnlink } from "react-icons/go";
 import { GiCancel } from "react-icons/gi";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { IoMdAddCircleOutline, IoMdCloseCircleOutline } from "react-icons/io";
 import { CgClose } from "react-icons/cg";
 import { CiEdit } from "react-icons/ci";
+import { CenterMap } from "../MapRoute";
+import { PiSelectionSlash } from "react-icons/pi";
+import axios from "axios";
+import { VscCloudDownload } from "react-icons/vsc";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 // Dynamically import Map component with no SSR
 const MapRoute = dynamic(() => import("../MapRoute"), {
   ssr: false,
@@ -84,6 +105,10 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
   const [api, contextHolder] = notification.useNotification();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [lastPartOfDay, setLastPartOfDay] = useState("");
+  const [center, setCenter] = useState<CenterMap>({
+    lat: 11.5564,
+    long: 104.9282,
+  });
 
   const openNotification = (
     message: string = "Default",
@@ -95,6 +120,140 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
       duration: 3,
       placement: "bottomLeft",
     });
+  };
+  // create or update  location rith
+  const [createModal, setCreateModal] = useState(false);
+  const [updateCap, setUpdateCap] = useState(false);
+  // Initialize the state to store values for each input
+  const [inputValues, setInputValues] = useState<any>({});
+
+  const handleUpdateCap = () => {
+    setUpdateCap(true);
+    setUpdateLocation(true);
+  };
+
+  // Function to handle value change for each InputNumber
+  const handleInputChange = (name: any, value: any) => {
+    setInputValues((prevValues: any) => ({
+      ...prevValues,
+      [name]: value,
+    }));
+  };
+
+  const { mutateAsync: createMutate } = useMutation({
+    mutationFn: createNewLocation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allLocations"] });
+      queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+      message.success("Location created successfully");
+      // openNotification("Update Drc", "Drc Updated successfully");
+      handleCancelCreate();
+    },
+    onError: (error: any) => {
+      message.error(error);
+    },
+  });
+  const { mutateAsync: updateMutate } = useMutation({
+    mutationFn: updateNewLocation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allLocations"] });
+      queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+      message.success("Location updated successfully");
+      // openNotification("Update Drc", "Drc Updated successfully");
+      handleCancelCreate();
+    },
+    onError: (error: any) => {
+      message.error(error);
+    },
+  });
+
+  const { mutateAsync: updateCapMutate } = useMutation({
+    mutationFn: updateCapNewLocation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allLocations"] });
+      queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+      message.success("Location updated successfully");
+      // openNotification("Update Drc", "Drc Updated successfully");
+      handleCancelCreate();
+    },
+    onError: (error: any) => {
+      message.error(error);
+    },
+  });
+
+  const {
+    register: registerCreate,
+    handleSubmit: handleSubmitCreate,
+    reset: resetCreate,
+    formState: { errors: errorsCreate },
+    control,
+    setValue: setValueCreate,
+  } = useForm<LocationCreate>();
+  const onSubmitCreate: SubmitHandler<LocationCreate> = async (data) => {
+    if (updateLocation && !updateCap) {
+      alert("inf");
+      const newData = { ...data, id: id };
+      await updateMutate(newData);
+    } else if (updateLocation && updateCap) {
+      alert("cap");
+      const newData = { ...data, ...inputValues, id: id };
+      await updateCapMutate(newData);
+    } else {
+      alert("new");
+      const newData = { ...data, ...inputValues, id: id };
+      await createMutate(newData);
+    }
+  };
+
+  const handleCancelCreate = () => {
+    setUpdateLocation(false);
+    resetCreate();
+    setInputValues({});
+    setCreateModal(false);
+    setUpdateCap(false);
+  };
+  const handleCreateNewLocation = () => {
+    resetCreate();
+    setCreateModal(true);
+  };
+  const [updateLocation, setUpdateLocation] = useState(false);
+  const handleUpdateLocation = (item: Location) => {
+    setUpdateLocation(true);
+    setCreateModal(true);
+    setValueCreate("code", item.code);
+    setValueCreate("zoneId", item.zone.id);
+    setValueCreate("phone", item.phone);
+    setValueCreate("truckSizeId", item.truckSize.id);
+    setValueCreate("partOfDay", item.partOfDay as PartOfDay);
+    setValueCreate("priority", item.priority as Priority);
+    setValueCreate("locationName", item.locationName);
+    setValueCreate("se", item.se);
+    setValueCreate("paymentTerm", item.paymentTerm);
+    setValueCreate("latitude", item.latitude);
+    setValueCreate("longitude", item.longitude);
+    setValueCreate("deliveryDate", item.deliveryDate);
+    setValueCreate("comments", item.comments);
+    setValueCreate("documentType", item.documentType);
+    setValueCreate("documentNumber", item.documentNumber);
+    setValueCreate("documentDate", item.documentDate);
+    setValueCreate("sla", item.sla);
+    setValueCreate("uploaddTime", item.uploaddTime);
+    setValueCreate("homeNo", item.homeNo);
+    setValueCreate("streetNo", item.streetNo);
+    setValueCreate("village", item.village);
+    setValueCreate("sangkat", item.sangkat);
+    setValueCreate("khan", item.khan);
+    setValueCreate("hotSpot", item.hotSpot);
+    setValueCreate("direction", item.direction);
+    setValueCreate("area", item.area);
+    setValueCreate("region", item.region);
+    setValueCreate("division", item.division);
+
+    // rith
+    for (const req of item.Requirement || []) {
+      handleInputChange(req.caseSize.name, req.amount);
+    }
+    console.log(item);
   };
 
   // locations
@@ -139,6 +298,36 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     setLocationTruckByDateId("");
   };
 
+  // download excel
+  const handleDownload = async () => {
+    try {
+      // Make a GET request to your backend route to download the file
+      const response = await axios.get(
+        `${baseUrl}/drc-date/download-excel-file/${id}`,
+        {
+          responseType: "blob", // Important to specify the response type as 'blob'
+        },
+      );
+
+      // Create a URL for the downloaded file
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+
+      // Create a link element to trigger the download
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "data.xlsx"); // Set the file name
+
+      // Append the link to the body and trigger the download
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up the link element
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading the Excel file:", error);
+    }
+  };
+
   // delete location
   const {
     mutateAsync: deleteLocationMutaion,
@@ -158,11 +347,15 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
   const handleDeleteLocation = async (
     latitude: number,
     longitude: number,
+    partOfDay: string,
+    priority: string,
     deliveryRouteCalculationDateId: number,
   ) => {
     await deleteLocationMutaion({
       latitude,
       longitude,
+      partOfDay,
+      priority,
       deliveryRouteCalculationDateId,
     });
   };
@@ -249,30 +442,85 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
   // end modal
 
   // assign state
-  const [assign, setAssign] = useState<{ id: number; capacity: number }[]>([]);
+  const [assign, setAssign] = useState<
+    { id: number; capacity: number; partOfDay: string; truckSize: string }[]
+  >([]);
 
   // assign function
-  const handleAssign = (id: number, capacity: number) => {
+  const handleAssign = (
+    id: number,
+    capacity: number,
+    partOfDay: string,
+    truckSize: string,
+  ) => {
     setAssign((prevAssign) => {
       if (prevAssign.some((item) => item.id === id)) {
         return prevAssign.filter((item) => item.id !== id);
       } else {
-        return [...prevAssign, { id, capacity }];
+        return [...prevAssign, { id, capacity, partOfDay, truckSize }];
       }
     });
   };
   // assign to truck
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const assignLocationsToTruck = async (truckByDateId: number) => {
+
+  const handleMarkerClick = (location: any) => {
+    handleAssign(
+      location.id,
+      location.capacity,
+      location.partOfDay,
+      location.truckSize,
+    );
+  };
+  const assignLocationsToTruck = async (
+    truckByDateId: number,
+    item: TruckByDate,
+  ) => {
     if (assign.length <= 0) {
       return message.error("Please select locations");
     }
     // Extracting the array of ids from the assign array
     const deliveryRouteCalculationDateIds = assign.map((item) => item.id);
 
-    // setIsModalVisible(true);
-    // check confirm before go throw in 2 condition : out of truck capacity, and assign not same truck size
-    // rith
+    // validation capacity
+    const totalCapacity = assign.reduce((sum, item) => sum + item.capacity, 0);
+    if (item.capacity < totalCapacity) {
+      return message.error("Capacity out of truck");
+    }
+
+    const partOfDayValues = assign.map((item) => item.partOfDay);
+    const uniquePartOfDayValues = Array.from(new Set(partOfDayValues));
+
+    console.log(item);
+
+    if (uniquePartOfDayValues.includes("MORNING")) {
+      const morningCapacity = item?.partOfDays?.MORNING?.total_capacity;
+      const compare = (morningCapacity || 0) + totalCapacity;
+      if (compare > item.capacity) {
+        return message.error("Capacity out of truck");
+      }
+    }
+    if (uniquePartOfDayValues.includes("AFTERNOON")) {
+      const afternoonCapacity = item?.partOfDays?.AFTERNOON?.total_capacity;
+      const compare = (afternoonCapacity || 0) + totalCapacity;
+      if (compare > item.capacity) {
+        return message.error("Capacity out of truck");
+      }
+    }
+    if (uniquePartOfDayValues.includes("EVENING")) {
+      const eveningCapacity = item?.partOfDays?.EVENING?.total_capacity;
+      const compare = (eveningCapacity || 0) + totalCapacity;
+      if (compare > item.capacity) {
+        return message.error("Capacity out of truck");
+      }
+    }
+    if (uniquePartOfDayValues.includes("NIGHT")) {
+      const nightCapacity = item?.partOfDays?.NIGHT?.total_capacity;
+      const compare = (nightCapacity || 0) + totalCapacity;
+      if (compare > item.capacity) {
+        return message.error("Capacity out of truck");
+      }
+    }
 
     await mutateAsync({
       truckByDateId,
@@ -443,6 +691,22 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     queryFn: getAllWarehouses,
   });
   const {
+    data: getAllWarehousesRouteData,
+    isLoading: isLoadinggetAllWarehousesRoute,
+    isError: isErrorgetAllWarehousesRoute,
+  } = useQuery({
+    queryKey: ["getAllWarehousesRoute"],
+    queryFn: getAllWarehousesRoute,
+  });
+  const {
+    data: getAllCaseNamesData,
+    isLoading: isLoadinggetAllCaseNames,
+    isError: isErrorgetAllCaseNames,
+  } = useQuery({
+    queryKey: ["getAllCaseNames"],
+    queryFn: getAllCaseNames,
+  });
+  const {
     data: getAllTruckFuelsData,
     isLoading: isLoadinggetAllTruckFuels,
     isError: isErrorgetAllTruckFuels,
@@ -494,7 +758,9 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     isLoadinggetAllTruckFuels ||
     isLoadinggetAllTruckSizes ||
     isLoadinggetAllWarehouses ||
-    isLoadinggetAllZonesRoute
+    isLoadinggetAllZonesRoute ||
+    isLoadinggetAllCaseNames ||
+    isLoadinggetAllWarehousesRoute
   ) {
     return <Skeleton />;
   }
@@ -506,7 +772,9 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     isErrorgetAllTruckDrivers ||
     isErrorgetAllTruckFuels ||
     isErrorgetAllTruckSizes ||
-    isErrorgetAllWarehouses
+    isErrorgetAllWarehouses ||
+    isErrorgetAllCaseNames ||
+    isErrorgetAllWarehousesRoute
   ) {
     return <div>Something happened</div>;
   }
@@ -693,10 +961,19 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
               <div className="flex flex-col ">
                 <div
                   onClick={showModal}
-                  title="Reset truck filter"
+                  title="add"
                   className="flex cursor-pointer justify-center rounded-md bg-primary p-1"
                 >
                   <IoMdAddCircleOutline color="white" size={20} />
+                </div>
+              </div>
+              <div className="flex flex-col ">
+                <div
+                  onClick={() => handleDownload()}
+                  title="add"
+                  className="flex cursor-pointer justify-center rounded-md bg-primary p-1"
+                >
+                  <VscCloudDownload color="white" size={20} />
                 </div>
               </div>
             </div>
@@ -890,12 +1167,15 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                   okText="Yes"
                   cancelText="No"
                 >
-                  <div
-                    title="Reset location filter"
+                  <Button
+                    title="Unassign locations"
                     className="flex cursor-pointer justify-center rounded-md bg-slate-300 p-1"
+                    disabled={
+                      assign.length === 0 || locationIsAssign === "false"
+                    }
                   >
                     <GiCancel color="red" size={20} />
-                  </div>
+                  </Button>
                 </Popconfirm>
               </div>
             </div>
@@ -910,7 +1190,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                 onContextMenu={() =>
                   handleRightClick(event, item.id.toString(), item.truck)
                 }
-                onClick={() => assignLocationsToTruck(item.id)}
+                onClick={() => assignLocationsToTruck(item.id, item)}
                 key={item.id}
                 className="mx-auto mb-2 max-w-sm  cursor-pointer overflow-hidden border-[1px] border-gray-300 bg-white shadow hover:border-primary hover:bg-slate-200 max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[300px] sm:rounded-md"
               >
@@ -1048,11 +1328,32 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
             ))}
           </div>
           <div className="h-[80vh] w-2/6 min-w-[300px] overflow-y-auto p-1 pe-3 max-[700px]:flex max-[700px]:h-fit max-[700px]:w-full max-[700px]:overflow-x-auto max-[700px]:overflow-y-hidden">
-            <div className="text-md">Locations: {dataLocations?.length}</div>
+            <div className="text-md flex items-center justify-between ">
+              <div className="flex">
+                <IoMdAddCircleOutline
+                  size={20}
+                  color="blue"
+                  className="cursor-pointer"
+                  title="Create new location"
+                  onClick={() => handleCreateNewLocation()}
+                />
+                Locations: {dataLocations?.length}
+              </div>
+
+              <div>
+                <PiSelectionSlash
+                  size={20}
+                  color="blue"
+                  className="cursor-pointer"
+                  title="Deselected all"
+                  onClick={() => setAssign([])}
+                />
+              </div>
+            </div>
             {dataLocations?.map((item, index) => {
               const previousItem = index > 0 ? dataLocations[index - 1] : null;
               return (
-                <div key={item.id}>
+                <div key={item.id} className="w-full">
                   {item.partOfDay !== previousItem?.partOfDay ? (
                     <div className="flex w-full items-center justify-between text-xs text-purple-700">
                       <div className="h-[1px] w-[100px] bg-purple-700"></div>
@@ -1066,8 +1367,6 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                     ""
                   )}
                   <div
-                    // onClick={() => handleAssign(item.id, item.capacity || 0)}
-                    // onDoubleClick={() => handleOpenLocationDrawer(item)}
                     className={`mx-auto mb-2 max-w-sm overflow-hidden border-[1px] bg-white shadow-md max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[300px] sm:rounded-lg ${
                       item.priority === "CRITICAL"
                         ? "border-red-500"
@@ -1096,6 +1395,13 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                             <span className="text-md ms-1 text-green-700">
                               {item.capacity?.toFixed(3)}m³
                             </span>
+                            {item.isSplit ? (
+                              <div className="ms-2 rounded-md border border-red-500 px-2">
+                                <span className="text-xs text-red">Split</span>
+                              </div>
+                            ) : (
+                              ""
+                            )}
                           </h3>
                           {item.isAssign ? (
                             assign.some(
@@ -1105,7 +1411,12 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                                 size={22}
                                 className="cursor-pointer text-green-700"
                                 onClick={() =>
-                                  handleAssign(item.id, item.capacity || 0)
+                                  handleAssign(
+                                    item.id,
+                                    item.capacity || 0,
+                                    item.partOfDay,
+                                    item.truckSize,
+                                  )
                                 }
                               />
                             ) : (
@@ -1113,7 +1424,12 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                                 size={22}
                                 className="cursor-pointer text-green-700"
                                 onClick={() =>
-                                  handleAssign(item.id, item.capacity || 0)
+                                  handleAssign(
+                                    item.id,
+                                    item.capacity || 0,
+                                    item.partOfDay,
+                                    item.truckSize,
+                                  )
                                 }
                               />
                             )
@@ -1124,7 +1440,12 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                               size={22}
                               className="cursor-pointer text-green-700"
                               onClick={() =>
-                                handleAssign(item.id, item.capacity || 0)
+                                handleAssign(
+                                  item.id,
+                                  item.capacity || 0,
+                                  item.partOfDay,
+                                  item.truckSize,
+                                )
                               }
                             />
                           ) : (
@@ -1132,7 +1453,12 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                               size={22}
                               className="cursor-pointer text-green-700"
                               onClick={() =>
-                                handleAssign(item.id, item.capacity || 0)
+                                handleAssign(
+                                  item.id,
+                                  item.capacity || 0,
+                                  item.partOfDay,
+                                  item.truckSize,
+                                )
                               }
                             />
                           )}
@@ -1140,14 +1466,14 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                         <div className="mt-2 flex items-center justify-between">
                           <div className="flex w-[110px] items-center text-xs text-gray-500">
                             <div className=" text-black">{item.partOfDay}</div>
-                            <CiEdit
+                            {/* <CiEdit
                               onClick={() =>
                                 handleUpdatePartOfDay(item.partOfDay, item.id)
                               }
                               size={15}
                               color="blue"
                               className="cursor-pointer"
-                            />
+                            /> */}
                           </div>
                           <div className="w-[30px] text-xs text-gray-500">
                             <span
@@ -1169,6 +1495,12 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                           <div className="w-[100px] text-end text-xs text-gray-500">
                             <span className=" text-black">{item.phone}</span>
                           </div>
+                          <CiEdit
+                            onClick={() => handleUpdateLocation(item)}
+                            size={20}
+                            color="blue"
+                            className="me-1 cursor-pointer"
+                          />
                           <Popconfirm
                             placement="rightTop"
                             title="Delete location"
@@ -1177,6 +1509,8 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                               handleDeleteLocation(
                                 item.latitude,
                                 item.longitude,
+                                item.partOfDay,
+                                item.priority,
                                 item.deliveryRouteCalculationDateId,
                               )
                             }
@@ -1186,7 +1520,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                             <FaRegTrashAlt
                               color="red"
                               size={15}
-                              className="cursor-pointer"
+                              className="me-1 cursor-pointer"
                             />
                           </Popconfirm>
 
@@ -1204,8 +1538,26 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
               );
             })}
           </div>
-          <div className="w-4/5 bg-slate-400 p-[1px] max-[700px]:h-[700px] max-[700px]:w-full">
-            {/* <MapRoute locations={dataLocations || []} /> */}
+          <div className="flex w-4/5 flex-col p-[1px] max-[700px]:w-full">
+            <div className="flex w-full overflow-x-auto pb-2">
+              {getAllWarehousesRouteData.map((item: any) => (
+                <div
+                  key={item.id}
+                  onClick={() => setCenter({ lat: item.lat, long: item.long })}
+                  className="me-1 flex min-w-fit cursor-pointer items-center justify-center rounded-md border-[1px] bg-gray-50 p-1 px-2 text-sm text-black hover:bg-slate-200"
+                >
+                  {item.name}
+                </div>
+              ))}
+            </div>
+            <div className="min-h-[75vh] w-full ">
+              {/* <MapRoute
+                locations={dataLocations || []}
+                center={center}
+                onClickMarker={handleMarkerClick}
+                clickedMarker={assign}
+              /> */}
+            </div>
           </div>
         </div>
       </div>
@@ -1424,7 +1776,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
         footer={null} // Set footer to null if you don't want to display anything there
       >
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="mt-2 text-slate-600">
+          <div className="text-slate-600">
             File<span className="text-red">*</span>
           </div>
           <input
@@ -1566,6 +1918,485 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
         <p>Some contents...</p>
         <p>Some contents...</p>
         <p>Some contents...</p>
+      </Modal>
+      <Modal
+        title="Create Location"
+        style={{ top: 40 }}
+        open={createModal}
+        onOk={() => setCreateModal(false)}
+        onCancel={handleCancelCreate}
+        width={1000}
+        footer={false}
+        maskClosable={false}
+      >
+        <form onSubmit={handleSubmitCreate(onSubmitCreate)}>
+          <div className="w-full">
+            <div className="flex justify-between">
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  Zone<span className="text-red">*</span>
+                </div>
+                <Controller
+                  name="zoneId"
+                  control={control}
+                  rules={{ required: "This field is required" }}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      style={{ width: "100%" }}
+                      placeholder="Please select"
+                      onChange={(value) => field.onChange(value)}
+                      options={getAllZonesData}
+                      showSearch
+                      filterOption={(input, option: any) =>
+                        option.label.toLowerCase().includes(input.toLowerCase())
+                      }
+                    />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  TruckSize<span className="text-red">*</span>
+                </div>
+                <Controller
+                  name="truckSizeId"
+                  control={control}
+                  rules={{ required: "This field is required" }}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      disabled={updateLocation && !updateCap}
+                      style={{ width: "100%" }}
+                      placeholder="Please select"
+                      onChange={(value) => field.onChange(value)}
+                      options={getAllTruckSizesData}
+                      showSearch
+                      filterOption={(input, option: any) =>
+                        option.label.toLowerCase().includes(input.toLowerCase())
+                      }
+                    />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  PartOfDay<span className="text-red">*</span>
+                </div>
+                <Controller
+                  name="partOfDay"
+                  control={control}
+                  rules={{ required: "This field is required" }}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      style={{ width: "100%" }}
+                      placeholder="Please select"
+                      onChange={(value) => field.onChange(value)}
+                      options={[
+                        { label: PartOfDay.MORNING, value: PartOfDay.MORNING },
+                        {
+                          label: PartOfDay.AFTERNOON,
+                          value: PartOfDay.AFTERNOON,
+                        },
+                        { label: PartOfDay.EVENING, value: PartOfDay.EVENING },
+                        { label: PartOfDay.NIGHT, value: PartOfDay.NIGHT },
+                      ]}
+                    />
+                  )}
+                />
+              </div>
+
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  Priority<span className="text-red">*</span>
+                </div>
+                <Controller
+                  name="priority"
+                  control={control}
+                  rules={{ required: "This field is required" }}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      style={{ width: "100%" }}
+                      placeholder="Please select"
+                      onChange={(value) => field.onChange(value)}
+                      options={[
+                        { label: Priority.TRIVIAL, value: Priority.TRIVIAL },
+                        { label: Priority.LOW, value: Priority.LOW },
+                        { label: Priority.MEDIUM, value: Priority.MEDIUM },
+                        { label: Priority.HIGH, value: Priority.HIGH },
+                        { label: Priority.CRITICAL, value: Priority.CRITICAL },
+                      ]}
+                    />
+                  )}
+                />
+              </div>
+            </div>
+            <div className="flex justify-between">
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  LocationName<span className="text-red">*</span>
+                </div>
+                <Controller
+                  name="locationName"
+                  rules={{ required: "This field is required" }}
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="locationName" />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  Phone<span className="text-red">*</span>
+                </div>
+                <Controller
+                  name="phone"
+                  rules={{ required: "This field is required" }}
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="Phone" />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  SE<span className="text-red">*</span>
+                </div>
+                <Controller
+                  name="se"
+                  rules={{ required: "This field is required" }}
+                  control={control}
+                  render={({ field }) => <Input {...field} placeholder="se" />}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  Payment<span className="text-red">*</span>
+                </div>
+                <Controller
+                  name="paymentTerm"
+                  rules={{ required: "This field is required" }}
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="paymentTerm" />
+                  )}
+                />
+              </div>
+            </div>
+            <div className="flex justify-between">
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  Latitude<span className="text-red">*</span>
+                </div>
+                <Controller
+                  name="latitude"
+                  rules={{ required: "This field is required" }}
+                  control={control}
+                  render={({ field }) => (
+                    <InputNumber
+                      {...field}
+                      placeholder="latitude"
+                      className="w-full"
+                    />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  Longitude<span className="text-red">*</span>
+                </div>
+                <Controller
+                  name="longitude"
+                  rules={{ required: "This field is required" }}
+                  control={control}
+                  render={({ field }) => (
+                    <InputNumber
+                      {...field}
+                      placeholder="longitude"
+                      className="w-full"
+                    />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  Date<span className="text-red">*</span>
+                </div>
+                <Controller
+                  name="deliveryDate"
+                  rules={{ required: "This field is required" }}
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="deliveryDate" />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  Comments<span className="text-red"></span>
+                </div>
+                <Controller
+                  name="comments"
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="comments" />
+                  )}
+                />
+              </div>
+            </div>
+            <div className="flex justify-between">
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  DocumentType<span className="text-red"></span>
+                </div>
+                <Controller
+                  name="documentType"
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="documentType" />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  DocumentNumber<span className="text-red"></span>
+                </div>
+                <Controller
+                  name="documentNumber"
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="documentNumber" />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  DocumentDate<span className="text-red"></span>
+                </div>
+                <Controller
+                  name="documentDate"
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="documentDate" />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  SLA<span className="text-red"></span>
+                </div>
+                <Controller
+                  name="sla"
+                  control={control}
+                  render={({ field }) => <Input {...field} placeholder="sla" />}
+                />
+              </div>
+            </div>
+            <div className="flex justify-between">
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  UploadedTime<span className="text-red"></span>
+                </div>
+                <Controller
+                  name="uploaddTime"
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="uploaddTime" />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  HomeNo<span className="text-red"></span>
+                </div>
+                <Controller
+                  name="homeNo"
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="homeNo" />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  StreetNo<span className="text-red"></span>
+                </div>
+                <Controller
+                  name="streetNo"
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="streetNo" />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  Village<span className="text-red"></span>
+                </div>
+                <Controller
+                  name="village"
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="village" />
+                  )}
+                />
+              </div>
+            </div>
+            <div className="flex justify-between">
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  Sangkat<span className="text-red"></span>
+                </div>
+                <Controller
+                  name="sangkat"
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="sangkat" />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  Khan<span className="text-red"></span>
+                </div>
+                <Controller
+                  name="khan"
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="khan" />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  HotSpot<span className="text-red"></span>
+                </div>
+                <Controller
+                  name="hotSpot"
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="hotSpot" />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  Direction<span className="text-red"></span>
+                </div>
+                <Controller
+                  name="direction"
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="direction" />
+                  )}
+                />
+              </div>
+            </div>
+            <div className="flex justify-between">
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  Area<span className="text-red"></span>
+                </div>
+                <Controller
+                  name="area"
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="area" />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  Region<span className="text-red"></span>
+                </div>
+                <Controller
+                  name="region"
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="region" />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  Division<span className="text-red"></span>
+                </div>
+                <Controller
+                  name="division"
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="division" />
+                  )}
+                />
+              </div>
+              <div className="m-1 w-full">
+                <div className="text-slate-600">
+                  Comments<span className="text-red"></span>
+                </div>
+                <Controller
+                  name="comments"
+                  control={control}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="comments" />
+                  )}
+                />
+              </div>
+            </div>
+            {updateLocation && !updateCap ? (
+              <div className="mt-1 flex">
+                <MdOutlineCheckBoxOutlineBlank
+                  size={20}
+                  color="blue"
+                  onClick={() => handleUpdateCap()}
+                />
+                Update Capacity
+              </div>
+            ) : (
+              ""
+            )}
+            {!updateLocation || updateCap ? (
+              <div>
+                {getAllCaseNamesData.map((item: any) => (
+                  <div key={item.name} className="m-1 w-full">
+                    <div className="m-1 w-full">
+                      <div className="text-slate-600">
+                        {item.name}
+                        <span className="text-red"></span>
+                      </div>
+                      <InputNumber
+                        placeholder={item.name}
+                        className="w-full"
+                        value={inputValues[item.name]} // Controlled input
+                        onChange={(value) =>
+                          handleInputChange(item.name, value)
+                        } // Handle change
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              ""
+            )}
+            <div className="flex w-full items-center justify-end">
+              <div
+                onClick={() => handleCancelCreate()}
+                className="me-1 mt-5 cursor-pointer rounded-md bg-blue-400 px-4 py-2 text-white"
+              >
+                Cancel
+              </div>
+              <button
+                type="submit"
+                className="me-1 mt-5 rounded-md bg-primary px-4 py-2 text-white"
+                disabled={isPendingCreate}
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </form>
       </Modal>
     </section>
   );
