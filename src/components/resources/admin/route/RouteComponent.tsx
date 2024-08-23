@@ -1,19 +1,19 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Input, message, Modal, notification, Popconfirm } from "antd";
+import {
+  DatePicker,
+  DatePickerProps,
+  message,
+  Modal,
+  notification,
+  Popconfirm,
+} from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
-import { FaRegEdit } from "react-icons/fa";
 import { FaRegTrashCan, FaRegEye } from "react-icons/fa6";
-import {
-  LuArrowLeft,
-  LuArrowRight,
-  LuPlusCircle,
-  LuSearch,
-  LuUploadCloud,
-} from "react-icons/lu";
+import { LuArrowLeft, LuArrowRight, LuPlusCircle } from "react-icons/lu";
 import Link from "next/link";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 
 import { RiMapPinLine } from "react-icons/ri";
 import TableSeleton from "../../components/TableSeleton";
@@ -24,6 +24,7 @@ import {
   getAllDRCDate,
   ResponseAll,
 } from "@/api/route";
+import moment from "moment";
 
 const RouteComponent = () => {
   const router = useRouter();
@@ -66,6 +67,7 @@ const RouteComponent = () => {
       },
     });
   const onSubmit: SubmitHandler<DRCDate> = async (data) => {
+    console.log(data.date);
     const date: DRCDate = {
       date: data.date,
     };
@@ -76,7 +78,7 @@ const RouteComponent = () => {
     handleSubmit,
     reset,
     formState: { errors },
-    setValue,
+    control,
   } = useForm<DRCDate>();
   // end create or update
 
@@ -154,9 +156,11 @@ const RouteComponent = () => {
     setLimit(newSize);
     router.push(`?page=1&limit=${newSize}`);
   };
-  const handleChangeSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setQuery(value);
+  const handleChangeSearch: DatePickerProps["onChange"] = (
+    date,
+    dateString,
+  ) => {
+    setQuery(dateString.toString());
   };
   // end fectch
 
@@ -184,13 +188,7 @@ const RouteComponent = () => {
       <div className=" md:flex md:items-center md:justify-end">
         <div className="flex flex-col">
           <p className="me-1 text-xs">.</p>
-          <input
-            className="w-[250px] rounded-md border-[1px] border-slate-300 p-1 max-[770px]:w-full"
-            type="date"
-            onChange={handleChangeSearch}
-            value={search ? search : query}
-            placeholder="Search"
-          />
+          <DatePicker onChange={handleChangeSearch} />
         </div>
       </div>
       {isLoading ? (
@@ -202,43 +200,39 @@ const RouteComponent = () => {
           {data?.data.map((item, index) => (
             <div
               key={item.id}
-              className="cursor-pointer rounded-sm border-[1px] border-slate-400 bg-gray-200 p-4 text-black hover:bg-slate-300 dark:bg-gray-800 dark:hover:bg-gray-700"
+              className="flex rounded-md border-[1px] border-slate-400 text-black dark:bg-gray-800 dark:hover:bg-gray-700"
             >
-              <div className="flex items-center">
+              <Link
+                href={`route/${item.id}`}
+                className="flex h-full w-5/6 cursor-pointer items-center rounded-bl-md rounded-tl-md p-4 hover:bg-slate-200 dark:hover:bg-black"
+              >
                 <div className="w-1/2 dark:text-white">
                   {dateConvert(item.date)}
                 </div>
-                <div className="w-1/4">
+                <div className="flex w-1/2 justify-center">
                   <h4 className="flex items-center text-black dark:text-gray-200">
                     <div className="me-2">{item._count?.Location}</div>
                     <RiMapPinLine className="mb-1" />
                   </h4>
                 </div>
-                <div className="w-1/4">
-                  <h4 className="float-end flex text-black dark:text-gray-200">
-                    <Link href={`route/${item.id}`}>
-                      <FaRegEye
-                        size={18}
-                        className="mx-1 cursor-pointer"
-                        title="See detail"
-                      />
-                    </Link>
-                    <Popconfirm
-                      title="Delete"
-                      description="Are you sure to delete?"
-                      okText="Yes"
-                      cancelText="No"
-                      onConfirm={() => handleDelete(item.id || 0)}
-                    >
-                      <FaRegTrashCan
-                        size={18}
-                        // color="red"
-                        className="mx-1 cursor-pointer text-red "
-                        title="Delete item"
-                      />
-                    </Popconfirm>
-                  </h4>
-                </div>
+              </Link>
+              <div className="flex w-1/6 items-center justify-center">
+                <h4 className="float-end flex text-black dark:text-gray-200">
+                  <Popconfirm
+                    title="Delete"
+                    description="Are you sure to delete?"
+                    okText="Yes"
+                    cancelText="No"
+                    onConfirm={() => handleDelete(item.id || 0)}
+                  >
+                    <FaRegTrashCan
+                      size={18}
+                      // color="red"
+                      className="mx-1 cursor-pointer text-red "
+                      title="Delete item"
+                    />
+                  </Popconfirm>
+                </h4>
               </div>
             </div>
           ))}
@@ -293,11 +287,21 @@ const RouteComponent = () => {
           <div className="mt-2 text-slate-600">
             Date<span className="text-red">*</span>
           </div>
-          <input
-            {...register("date", { required: true })}
-            type="date"
-            placeholder="Date"
-            className="w-full rounded-[7px] border-[1.5px] border-stroke bg-transparent px-5.5 py-3  text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 "
+          <Controller
+            name="date"
+            control={control}
+            rules={{ required: true }}
+            render={({ field: { onChange, value, ...rest } }) => (
+              <DatePicker
+                {...rest}
+                placeholder="Date"
+                className="w-full"
+                value={value ? moment(value, "YYYY-MM-DD") : null} // Convert JS Date or string to moment with specific format
+                onChange={(date) =>
+                  onChange(date ? date.format("YYYY-MM-DD") : "")
+                } // Convert moment to formatted string
+              />
+            )}
           />
           {errors.date && (
             <span className="text-sm text-red-800">

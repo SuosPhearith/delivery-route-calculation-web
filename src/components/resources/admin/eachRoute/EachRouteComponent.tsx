@@ -21,7 +21,6 @@ import {
   updateLocationPartOfDay,
   updateNewLocation,
 } from "@/api/eachRoute";
-import moment from "moment";
 import {
   getAllTruckAssistants,
   getAllTruckDrivers,
@@ -35,8 +34,6 @@ import Header from "@/components/Header";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Button,
-  Card,
-  DatePicker,
   Drawer,
   Input,
   InputNumber,
@@ -45,20 +42,13 @@ import {
   notification,
   Popconfirm,
   Select,
-  Space,
+  Tag,
 } from "antd";
 import Link from "next/link";
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  FaCheckSquare,
-  FaListUl,
-  FaLongArrowAltRight,
-  FaRegEye,
-  FaRegTrashAlt,
-} from "react-icons/fa";
+import React, { useMemo, useState } from "react";
+import { FaRegEye, FaRegTrashAlt } from "react-icons/fa";
 import { IoChevronBackCircle } from "react-icons/io5";
 import {
-  MdAltRoute,
   MdCheckBox,
   MdCheckBoxOutlineBlank,
   MdOutlineCheckBoxOutlineBlank,
@@ -70,7 +60,7 @@ import { GrPowerReset } from "react-icons/gr";
 import { GoLink, GoUnlink } from "react-icons/go";
 import { GiCancel } from "react-icons/gi";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
-import { IoMdAddCircleOutline, IoMdCloseCircleOutline } from "react-icons/io";
+import { IoMdAddCircleOutline } from "react-icons/io";
 import { CgClose } from "react-icons/cg";
 import { CiEdit } from "react-icons/ci";
 import { CenterMap } from "../MapRoute";
@@ -104,7 +94,6 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
   const queryClient = useQueryClient();
   const [api, contextHolder] = notification.useNotification();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [lastPartOfDay, setLastPartOfDay] = useState("");
   const [center, setCenter] = useState<CenterMap>({
     lat: 11.5564,
     long: 104.9282,
@@ -145,8 +134,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allLocations"] });
       queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
-      message.success("Location created successfully");
-      // openNotification("Update Drc", "Drc Updated successfully");
+      openNotification("Create", "Location created successfully");
       handleCancelCreate();
     },
     onError: (error: any) => {
@@ -158,8 +146,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allLocations"] });
       queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
-      message.success("Location updated successfully");
-      // openNotification("Update Drc", "Drc Updated successfully");
+      openNotification("Update", "Location updated successfully");
       handleCancelCreate();
     },
     onError: (error: any) => {
@@ -172,8 +159,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allLocations"] });
       queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
-      message.success("Location updated successfully");
-      // openNotification("Update Drc", "Drc Updated successfully");
+      openNotification("Update", "Location updated successfully");
       handleCancelCreate();
     },
     onError: (error: any) => {
@@ -191,15 +177,12 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
   } = useForm<LocationCreate>();
   const onSubmitCreate: SubmitHandler<LocationCreate> = async (data) => {
     if (updateLocation && !updateCap) {
-      alert("inf");
       const newData = { ...data, id: id };
       await updateMutate(newData);
     } else if (updateLocation && updateCap) {
-      alert("cap");
       const newData = { ...data, ...inputValues, id: id };
       await updateCapMutate(newData);
     } else {
-      alert("new");
       const newData = { ...data, ...inputValues, id: id };
       await createMutate(newData);
     }
@@ -249,7 +232,6 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     setValueCreate("region", item.region);
     setValueCreate("division", item.division);
 
-    // rith
     for (const req of item.Requirement || []) {
       handleInputChange(req.caseSize.name, req.amount);
     }
@@ -283,10 +265,15 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [rightClickTruckByDateId, setRightClickTruckByDateId] = useState("");
 
-  const handleRightClick = (event: any, id: string, item: any) => {
+  const handleRightClick = (event: any, id: string, item: TruckByDate) => {
     event.preventDefault();
+    console.log(item.AssignLocationToTruck);
     setPosition({ x: event.clientX, y: event.clientY });
-    setTruckItem(item);
+    setTruckItem({
+      ...item.truck,
+      AssignLocationToTruck: item.AssignLocationToTruck,
+      partOfDays: item.partOfDays,
+    });
     setRightClickTruckByDateId(id);
     setShowButton(true);
   };
@@ -301,6 +288,14 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
   // download excel
   const handleDownload = async () => {
     try {
+      // validation
+      for (const truck of data || []) {
+        for (const checked of truck.AssignLocationToTruck || []) {
+          if (checked.location.capacity > truck.capacity) {
+            return message.error("please check out of truck");
+          }
+        }
+      }
       // Make a GET request to your backend route to download the file
       const response = await axios.get(
         `${baseUrl}/drc-date/download-excel-file/${id}`,
@@ -337,8 +332,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allLocations"] });
       queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
-      // message.success("Direction created successfully");
-      openNotification("Create Drc", "Drc Created successfully");
+      openNotification("Delete", "Location Deleted successfully");
     },
     onError: (error: any) => {
       message.error(error);
@@ -380,7 +374,6 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allLocations"] });
       queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
-      // message.success("Direction created successfully");
       openNotification("Update Drc", "Drc Updated successfully");
       handleCancelPartOfDayModal();
     },
@@ -389,7 +382,6 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     },
   });
   const updatePartOfDay = async () => {
-    // console.log(partOfDayUpdatedId + " --" + currentPartOfDay);
     await updatePartOfDayMutate({
       id: partOfDayUpdatedId || 0,
       partOfDay: currentPartOfDay,
@@ -403,8 +395,8 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
       mutationFn: createDrc,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["allLocations"] });
-        // message.success("Direction created successfully");
-        openNotification("Create Drc", "Drc Created successfully");
+        queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+        openNotification("Create", "Created successfully");
         handleCancel();
       },
       onError: (error: any) => {
@@ -422,7 +414,6 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     handleSubmit,
     reset,
     formState: { errors },
-    setValue,
   } = useForm<CreateDrc>();
   // end create
 
@@ -491,8 +482,6 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     const partOfDayValues = assign.map((item) => item.partOfDay);
     const uniquePartOfDayValues = Array.from(new Set(partOfDayValues));
 
-    console.log(item);
-
     if (uniquePartOfDayValues.includes("MORNING")) {
       const morningCapacity = item?.partOfDays?.MORNING?.total_capacity;
       const compare = (morningCapacity || 0) + totalCapacity;
@@ -549,8 +538,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allLocations"] });
       queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
-      // message.success("Ownership created successfully");
-      openNotification("Assigned", "Locations Unassigned successfully");
+      message.success("Locations Unassigned successfully");
       setAssign([]);
     },
     onError: (error: any) => {
@@ -563,8 +551,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["allLocations"] });
         queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
-        // message.success("Ownership created successfully");
-        openNotification("Unassigned", "Locations Assigned successfully");
+        message.success("Locations Unassigned successfully");
         setAssign([]);
       },
       onError: (error: any) => {
@@ -840,7 +827,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                   size={30}
                 />
               </Link>
-              <div className="flex flex-col ">
+              <div className="flex flex-col">
                 <Select
                   showSearch
                   className="w-[135px] max-[770px]:w-full"
@@ -1188,7 +1175,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
             {data?.map((item) => (
               <div
                 onContextMenu={() =>
-                  handleRightClick(event, item.id.toString(), item.truck)
+                  handleRightClick(event, item.id.toString(), item)
                 }
                 onClick={() => assignLocationsToTruck(item.id, item)}
                 key={item.id}
@@ -1215,7 +1202,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                         </span>
                         <span
                           className={
-                            item.capacity >
+                            item.capacity >=
                             (item.partOfDays?.MORNING?.total_capacity || 0)
                               ? "text-primary"
                               : "text-red-800"
@@ -1242,7 +1229,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                         </span>
                         <span
                           className={
-                            item.capacity >
+                            item.capacity >=
                             (item.partOfDays?.AFTERNOON?.total_capacity || 0)
                               ? "text-primary"
                               : "text-red-800"
@@ -1263,7 +1250,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                         </span>
                         <span
                           className={
-                            item.capacity >
+                            item.capacity >=
                             (item.partOfDays?.EVENING?.total_capacity || 0)
                               ? "text-primary"
                               : "text-red-800"
@@ -1283,7 +1270,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                         </span>
                         <span
                           className={
-                            item.capacity >
+                            item.capacity >=
                             (item.partOfDays?.NIGHT?.total_capacity || 0)
                               ? "text-primary"
                               : "text-red-800"
@@ -1396,9 +1383,9 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                               {item.capacity?.toFixed(3)}m³
                             </span>
                             {item.isSplit ? (
-                              <div className="ms-2 rounded-md border border-red-500 px-2">
-                                <span className="text-xs text-red">Split</span>
-                              </div>
+                              <Tag color="magenta" className="ms-2">
+                                Split
+                              </Tag>
                             ) : (
                               ""
                             )}
@@ -1551,12 +1538,12 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
               ))}
             </div>
             <div className="min-h-[75vh] w-full ">
-              {/* <MapRoute
+              <MapRoute
                 locations={dataLocations || []}
                 center={center}
                 onClickMarker={handleMarkerClick}
                 clickedMarker={assign}
-              /> */}
+              />
             </div>
           </div>
         </div>
@@ -1565,207 +1552,180 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
         title="Location Details"
         onClose={handleCloseLocationDrawer}
         open={openLocationDrawer}
-        size="large"
       >
         <div className="px-4">
-          <div className="flex items-center">
+          <div className="mb-2 flex items-center">
             <FaRegEye
               color="blue"
-              size={20}
-              className="mb-2 me-2 cursor-pointer"
+              size={18}
+              className="me-2 cursor-pointer"
               onClick={() => viewLocationMap(locationItem?.phone || "")}
             />
-            <h2 className="mb-2 text-xl">{locationItem?.locationName}</h2>
+            <h2 className="text-xl">{locationItem?.locationName}</h2>
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">SE:</p>
-              <p className="font-medium">{locationItem?.se}</p>
+          <div className="flex items-center justify-between">
+            <div className="h-[1px] w-[40%] bg-slate-400"></div>
+            <div className="flex w-[20%] items-center justify-center">Item</div>
+            <div className="h-[1px] w-[40%] bg-slate-400"></div>
+          </div>
+          <div className="flex flex-col">
+            {locationItem?.Requirement?.map((item) => (
+              <div
+                key={item.id}
+                className="m-1 flex w-full items-center hover:bg-slate-100"
+              >
+                <p className="me-2 text-sm text-gray-500">
+                  {item.caseSize.name}:
+                </p>
+                <p className="font-medium">{item.amount}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 flex items-center justify-between">
+            <div className="h-[1px] w-[35%] bg-slate-400"></div>
+            <div className="flex w-[30%] items-center justify-center">
+              Inforamtion
             </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Phone:</p>
-              <p className="font-medium">{locationItem?.phone}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Truck Size:</p>
-              <p className="font-medium">{locationItem?.truckSize?.name}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Capacity:</p>
-              <p className="font-medium">{locationItem?.capacity} m³</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Part of Day:</p>
-              <p className="font-medium">{locationItem?.partOfDay}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Priority:</p>
-              <p className="font-medium">{locationItem?.priority}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Zone:</p>
-              <p className="font-medium">{locationItem?.zone?.name}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Payment Term:</p>
-              <p className="font-medium">{locationItem?.paymentTerm}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Delivery Date:</p>
-              <p className="font-medium">{locationItem?.deliveryDate}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Assigned:</p>
-              <p className="font-medium">
-                {locationItem?.isAssign ? "Yes" : "No"}
-              </p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">
-                Truck Size Cubic Capacity:
-              </p>
-              <p className="font-medium">
-                {locationItem?.truckSize?.containerCubic} m³
-              </p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Latitude:</p>
-              <p className="font-medium">{locationItem?.latitude}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Longitude:</p>
-              <p className="font-medium">{locationItem?.longitude}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Document Type:</p>
-              <p className="font-medium">{locationItem?.documentType}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Document Number:</p>
-              <p className="font-medium">{locationItem?.documentNumber}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Document Date:</p>
-              <p className="font-medium">{locationItem?.documentDate}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">SLA:</p>
-              <p className="font-medium">{locationItem?.sla}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Upload Time:</p>
-              <p className="font-medium">{locationItem?.uploaddTime}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Home No:</p>
-              <p className="font-medium">{locationItem?.homeNo}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Street No:</p>
-              <p className="font-medium">{locationItem?.streetNo}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Village:</p>
-              <p className="font-medium">{locationItem?.village}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Sangkat:</p>
-              <p className="font-medium">{locationItem?.sangkat}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Khan:</p>
-              <p className="font-medium">{locationItem?.khan}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Hot Spot:</p>
-              <p className="font-medium">{locationItem?.hotSpot}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Direction:</p>
-              <p className="font-medium">{locationItem?.direction}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Area:</p>
-              <p className="font-medium">{locationItem?.area}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Region:</p>
-              <p className="font-medium">{locationItem?.region}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Division:</p>
-              <p className="font-medium">{locationItem?.division}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Comments:</p>
-              <p className="font-medium">{locationItem?.comments}</p>
-            </div>
+            <div className="h-[1px] w-[35%] bg-slate-400"></div>
+          </div>
+          <div className="flex flex-col">
+            {[
+              { label: "SE", value: locationItem?.se },
+              { label: "Phone", value: locationItem?.phone },
+              { label: "Truck Size", value: locationItem?.truckSize?.name },
+              {
+                label: "Capacity",
+                value: `${locationItem?.capacity?.toFixed(3)} m³`,
+              },
+              { label: "Part of Day", value: locationItem?.partOfDay },
+              { label: "Priority", value: locationItem?.priority },
+              { label: "Zone", value: locationItem?.zone?.name },
+              { label: "Payment Term", value: locationItem?.paymentTerm },
+              { label: "Delivery Date", value: locationItem?.deliveryDate },
+              {
+                label: "Assigned",
+                value: locationItem?.isAssign ? "Yes" : "No",
+              },
+              {
+                label: "Truck Size Cubic Capacity",
+                value: `${locationItem?.truckSize?.containerCubic} m³`,
+              },
+              { label: "Latitude", value: locationItem?.latitude },
+              { label: "Longitude", value: locationItem?.longitude },
+              { label: "Document Type", value: locationItem?.documentType },
+              { label: "Document Number", value: locationItem?.documentNumber },
+              { label: "Document Date", value: locationItem?.documentDate },
+              { label: "SLA", value: locationItem?.sla },
+              { label: "Upload Time", value: locationItem?.uploaddTime },
+              { label: "Home No", value: locationItem?.homeNo },
+              { label: "Street No", value: locationItem?.streetNo },
+              { label: "Village", value: locationItem?.village },
+              { label: "Sangkat", value: locationItem?.sangkat },
+              { label: "Khan", value: locationItem?.khan },
+              { label: "Hot Spot", value: locationItem?.hotSpot },
+              { label: "Direction", value: locationItem?.direction },
+              { label: "Area", value: locationItem?.area },
+              { label: "Region", value: locationItem?.region },
+              { label: "Division", value: locationItem?.division },
+              { label: "Comments", value: locationItem?.comments },
+            ].map(({ label, value }) => (
+              <div
+                key={label}
+                className="m-1 flex w-full items-center hover:bg-slate-100"
+              >
+                <p className="me-2 text-sm text-gray-500">{label}:</p>
+                <p className="font-medium">{value}</p>
+              </div>
+            ))}
           </div>
         </div>
       </Drawer>
+
       <Drawer
         title="Truck Information"
         onClose={handleCloseTruckDrawer}
         open={openTruckDrawer}
-        size="large"
       >
-        <div className="p-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">License Plate:</p>
-              <p className="font-medium">{truckItem?.licensePlate}</p>
+        <div className="px-4">
+          <div className="flex items-center justify-between">
+            <div className="h-[1px] w-[40%] bg-slate-400"></div>
+            <div className="flex w-[20%] items-center justify-center">
+              Dilivery
             </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Model:</p>
-              <p className="font-medium">{truckItem?.model}</p>
+            <div className="h-[1px] w-[40%] bg-slate-400"></div>
+          </div>
+          {/* rith */}
+          <div className="flex flex-col">
+            {[
+              { label: "MORNING" },
+              { label: "AFTERNOON" },
+              { label: "EVENING" },
+              { label: "NIGHT" },
+            ].map((item) => {
+              let opt = item.label;
+              return (
+                <div
+                  key={opt}
+                  className="m-1 flex w-full items-center hover:bg-slate-100"
+                >
+                  <p className="me-2 text-sm text-gray-500">{opt}:</p>
+                  <p className="font-medium">
+                    {truckItem?.partOfDays?.[opt]?.total_capacity.toFixed(3) ||
+                      0}{" "}
+                    m³
+                    <span className="me-1">, </span>
+                    <span className="me-1">
+                      {truckItem?.partOfDays?.[opt]?.number_of_delivery || 0}
+                    </span>
+                    Locations
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-5 flex items-center justify-between">
+            <div className="h-[1px] w-[35%] bg-slate-400"></div>
+            <div className="flex w-[30%] items-center justify-center">
+              Inforamtion
             </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Manufacturer:</p>
-              <p className="font-medium">{truckItem?.manufacturer}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Functioning:</p>
-              <p className="font-medium">{truckItem?.functioning}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Status:</p>
-              <p className="font-medium">{truckItem?.status}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Truck Size:</p>
-              <p className="font-medium">{truckItem?.truckSize?.name}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Fuel Type:</p>
-              <p className="font-medium">{truckItem?.fuel?.name}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Zone:</p>
-              <p className="font-medium">
-                {truckItem?.zone?.code}({truckItem?.zone?.name})
-              </p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Warehouse:</p>
-              <p className="font-medium">{truckItem?.warehouse?.name}</p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">Ownership Type:</p>
-              <p className="font-medium">
-                {truckItem?.truckOwnershipType?.name}
-              </p>
-            </div>
-            <div className="border-gray-30 flex w-full items-center break-words rounded border-[1px] bg-white p-4">
-              <p className="me-2 text-sm text-gray-500">
-                Container Size (Cubic):
-              </p>
-              <p className="font-medium">
-                {truckItem?.truckSize?.containerCubic} m³
-              </p>
-            </div>
+            <div className="h-[1px] w-[35%] bg-slate-400"></div>
+          </div>
+          <div className="flex flex-col">
+            {[
+              { label: "License Plate", value: truckItem?.licensePlate },
+              { label: "Model", value: truckItem?.model },
+              { label: "Manufacturer", value: truckItem?.manufacturer },
+              { label: "Functioning", value: truckItem?.functioning },
+              { label: "Status", value: truckItem?.status },
+              { label: "Truck Size", value: truckItem?.truckSize?.name },
+              { label: "Fuel Type", value: truckItem?.fuel?.name },
+              {
+                label: "Zone",
+                value: `${truckItem?.zone?.code} (${truckItem?.zone?.name})`,
+              },
+              { label: "Warehouse", value: truckItem?.warehouse?.name },
+              {
+                label: "Ownership Type",
+                value: truckItem?.truckOwnershipType?.name,
+              },
+              {
+                label: "Container Size (Cubic)",
+                value: `${truckItem?.truckSize?.containerCubic} m³`,
+              },
+            ].map(({ label, value }) => (
+              <div
+                key={label}
+                className="m-1 flex w-full items-center hover:bg-slate-100"
+              >
+                <p className="me-2 text-sm text-gray-500">{label}:</p>
+                <p className="font-medium">{value}</p>
+              </div>
+            ))}
           </div>
         </div>
       </Drawer>
+
       <Modal
         title={"Create"}
         className="font-satoshi"
@@ -1920,7 +1880,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
         <p>Some contents...</p>
       </Modal>
       <Modal
-        title="Create Location"
+        title={updateLocation ? "Update Location" : "Create Location"}
         style={{ top: 40 }}
         open={createModal}
         onOk={() => setCreateModal(false)}
@@ -2333,15 +2293,9 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
               </div>
               <div className="m-1 w-full">
                 <div className="text-slate-600">
-                  Comments<span className="text-red"></span>
+                  Other<span className="text-red"></span>
                 </div>
-                <Controller
-                  name="comments"
-                  control={control}
-                  render={({ field }) => (
-                    <Input {...field} placeholder="comments" />
-                  )}
-                />
+                <Input placeholder="Other" disabled={true} />
               </div>
             </div>
             {updateLocation && !updateCap ? (
@@ -2392,7 +2346,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                 className="me-1 mt-5 rounded-md bg-primary px-4 py-2 text-white"
                 disabled={isPendingCreate}
               >
-                Create
+                {updateLocation ? "Update" : "Create"}
               </button>
             </div>
           </div>

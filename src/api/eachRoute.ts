@@ -21,6 +21,13 @@ export interface Truck {
   zone?: any;
   warehouse?: any;
   truckOwnershipType?: any;
+  AssignLocationToTruck?: any[];
+  partOfDays?: {
+    [key: string]: {
+      number_of_delivery: number;
+      total_capacity: number;
+    };
+  } | null;
 }
 
 // Define the structure for a TruckByDate object
