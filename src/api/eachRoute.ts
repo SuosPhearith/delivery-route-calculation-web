@@ -320,6 +320,19 @@ export const deleteLocation = async (data: DeleteLocation) => {
   }
 };
 
+export const deleteSingleLocation = async (id: number) => {
+  try {
+    // Make API request with FormData
+    const response = await apiRequest(
+      "DELETE",
+      `/drc-date/delete-single-location/route/${id}`,
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export interface UpdatePartOfDay {
   id: number;
   partOfDay: string;
@@ -453,6 +466,22 @@ export const updateCapNewLocation = async (data: LocationCreate) => {
     const response = await apiRequest(
       "PATCH",
       `/drc-date/update-cap-single-location/route/${data.id}`,
+      {
+        ...data,
+      },
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateSingleLocation = async (data: LocationCreate) => {
+  try {
+    // Make API request with FormData
+    const response = await apiRequest(
+      "PATCH",
+      `/drc-date/update-single-location-split/route/${data.id}`,
       {
         ...data,
       },

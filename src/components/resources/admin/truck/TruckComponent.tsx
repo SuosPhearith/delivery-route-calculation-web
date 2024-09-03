@@ -396,7 +396,7 @@ const TruckComponent = () => {
           <p className="me-1 text-xs">Status:</p>
           <Select
             showSearch
-            className="w-[150px] max-[770px]:w-full"
+            className="select-me w-[150px] max-[770px]:w-full"
             defaultValue=""
             value={status}
             optionFilterProp="label"
@@ -425,7 +425,7 @@ const TruckComponent = () => {
           <p className="me-1 text-xs">Size:</p>
           <Select
             showSearch
-            className="w-[100px] max-[770px]:w-full"
+            className="select-me w-[100px] max-[770px]:w-full"
             // style={{ width: 100 }}
             defaultValue=""
             value={truckSizeId}
@@ -438,7 +438,7 @@ const TruckComponent = () => {
           <p className="me-1 text-xs">Zone:</p>
           <Select
             showSearch
-            className="w-[200px] max-[770px]:w-full"
+            className="select-me w-[200px] max-[770px]:w-full"
             // style={{ width: 200 }}
             defaultValue=""
             value={zoneId}
@@ -451,7 +451,7 @@ const TruckComponent = () => {
           <p className="me-1 text-xs">Fuel:</p>
           <Select
             showSearch
-            className="w-[150px] max-[770px]:w-full"
+            className="select-me w-[150px] max-[770px]:w-full"
             // style={{ width: 150 }}
             defaultValue=""
             value={fuelId}
@@ -464,7 +464,7 @@ const TruckComponent = () => {
           <p className="me-1 text-xs">Warehouse:</p>
           <Select
             showSearch
-            className="w-[150px] max-[770px]:w-full"
+            className="select-me w-[150px] max-[770px]:w-full"
             // style={{ width: 150 }}
             defaultValue=""
             value={warehouseId}
@@ -477,7 +477,7 @@ const TruckComponent = () => {
           <p className="me-1 text-xs">Ownership:</p>
           <Select
             showSearch
-            className="w-[150px] max-[770px]:w-full"
+            className="select-me w-[150px] max-[770px]:w-full"
             // style={{ width: 150 }}
             defaultValue=""
             value={truckOwnershipTypeId}
@@ -502,8 +502,7 @@ const TruckComponent = () => {
         <div className="flex flex-col">
           <p className="me-1 text-xs">.</p>
           <Input
-            className="w-[250px] max-[770px]:w-full"
-            // style={{ width: 250 }}
+            className="input-me w-[250px] dark:bg-gray-dark max-[770px]:w-full"
             prefix={<LuSearch />}
             onChange={handleChangeSearch}
             value={search ? search : query}

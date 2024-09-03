@@ -40,38 +40,12 @@ const menuGroups = [
         route: "/admin/route",
       },
       {
-        icon: <BsTruck size={20} />,
+        icon: <MdOutlineDirections size={20} />,
         label:
           lang === Languages.KH
-            ? TRANSLATIONS[Languages.KH].truck
-            : TRANSLATIONS[Languages.EN].truck,
-        route: "#",
-        children: [
-          { label: "Truck", route: "/admin/truck" },
-          { label: "Fuel", route: "/admin/fuel" },
-          { label: "Size", route: "/admin/size" },
-          { label: "Ownership", route: "/admin/ownership" },
-        ],
-      },
-      {
-        icon: <LiaWarehouseSolid size={20} />,
-        label:
-          lang === Languages.KH
-            ? TRANSLATIONS[Languages.KH].warehouse
-            : TRANSLATIONS[Languages.EN].warehouse,
-        route: "/admin/warehouse",
-      },
-      {
-        icon: <PiBuildingOffice size={20} />,
-        label:
-          lang === Languages.KH
-            ? TRANSLATIONS[Languages.KH].office
-            : TRANSLATIONS[Languages.EN].office,
-        route: "#",
-        children: [
-          { label: "Controll", route: "/admin/controll" },
-          { label: "Zone", route: "/admin/zone" },
-        ],
+            ? TRANSLATIONS[Languages.KH].direction
+            : TRANSLATIONS[Languages.EN].direction,
+        route: "/admin/direction",
       },
       {
         icon: <BsBoxSeam size={20} />,
@@ -82,6 +56,70 @@ const menuGroups = [
         route: "/admin/case",
       },
       {
+        icon: <BsTruck size={20} />,
+        label:
+          lang === Languages.KH
+            ? TRANSLATIONS[Languages.KH].truck
+            : TRANSLATIONS[Languages.EN].truck,
+        route: "#",
+        children: [
+          {
+            label:
+              lang === Languages.KH
+                ? TRANSLATIONS[Languages.KH].truck
+                : TRANSLATIONS[Languages.EN].truck,
+            route: "/admin/truck",
+          },
+          {
+            label:
+              lang === Languages.KH
+                ? TRANSLATIONS[Languages.KH].fuel
+                : TRANSLATIONS[Languages.EN].fuel,
+            route: "/admin/fuel",
+          },
+          {
+            label:
+              lang === Languages.KH
+                ? TRANSLATIONS[Languages.KH].size
+                : TRANSLATIONS[Languages.EN].size,
+            route: "/admin/size",
+          },
+          {
+            label:
+              lang === Languages.KH
+                ? TRANSLATIONS[Languages.KH].ownership
+                : TRANSLATIONS[Languages.EN].ownership,
+            route: "/admin/ownership",
+          },
+        ],
+      },
+
+      {
+        icon: <PiBuildingOffice size={20} />,
+        label:
+          lang === Languages.KH
+            ? TRANSLATIONS[Languages.KH].office
+            : TRANSLATIONS[Languages.EN].office,
+        route: "#",
+        children: [
+          {
+            label:
+              lang === Languages.KH
+                ? TRANSLATIONS[Languages.KH].office_controll
+                : TRANSLATIONS[Languages.EN].office_controll,
+            route: "/admin/controll",
+          },
+          {
+            label:
+              lang === Languages.KH
+                ? TRANSLATIONS[Languages.KH].zone
+                : TRANSLATIONS[Languages.EN].zone,
+            route: "/admin/zone",
+          },
+        ],
+      },
+
+      {
         icon: <GiSteeringWheel size={20} />,
         label:
           lang === Languages.KH
@@ -89,18 +127,29 @@ const menuGroups = [
             : TRANSLATIONS[Languages.EN].driver,
         route: "#",
         children: [
-          { label: "Driver", route: "/admin/driver" },
-          { label: "Assistant", route: "/admin/assistant" },
-          { label: "License", route: "/admin/license" },
+          {
+            label:
+              lang === Languages.KH
+                ? TRANSLATIONS[Languages.KH].driver
+                : TRANSLATIONS[Languages.EN].driver,
+            route: "/admin/driver",
+          },
+          {
+            label:
+              lang === Languages.KH
+                ? TRANSLATIONS[Languages.KH].assistant
+                : TRANSLATIONS[Languages.EN].assistant,
+            route: "/admin/assistant",
+          },
         ],
       },
       {
-        icon: <MdOutlineDirections size={20} />,
+        icon: <LiaWarehouseSolid size={20} />,
         label:
           lang === Languages.KH
-            ? TRANSLATIONS[Languages.KH].direction
-            : TRANSLATIONS[Languages.EN].direction,
-        route: "/admin/direction",
+            ? TRANSLATIONS[Languages.KH].warehouse
+            : TRANSLATIONS[Languages.EN].warehouse,
+        route: "/admin/warehouse",
       },
       {
         icon: <BsGear size={20} />,
@@ -141,23 +190,23 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
           <div>
             <div className="flex dark:hidden">
               <Image
-                width={176}
+                width={32}
                 height={32}
-                src={"/images/logo/logo-icon.svg"}
+                src={"/images/logo/ofl.png"}
                 alt="Logo"
                 priority
-                style={{ width: "auto", height: "auto" }}
+                className="h-full"
               />
               <div className="ms-3 text-3xl font-bold text-blue-950">D.R.C</div>
             </div>
             <div className="hidden dark:flex">
               <Image
-                width={176}
+                width={32}
                 height={32}
-                src={"/images/logo/logo-icon.svg"}
+                src={"/images/logo/ofl.png"}
                 alt="Logo"
                 priority
-                style={{ width: "auto", height: "auto" }}
+                className="h-full"
               />
               <div className="ms-3 text-3xl font-bold text-white">D.R.C</div>
             </div>

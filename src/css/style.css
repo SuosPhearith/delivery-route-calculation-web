@@ -16,6 +16,36 @@
 } */
 .custom-select .ant-select-selector .ant-select-selection-item {
     font-size: 12px; /* Adjust font size */
+    background-color: black !important;
+}
+
+.dark .input-me input::placeholder{
+    color: #EEF !important;
+}
+
+.dark .input-me input {
+    color: #EEF !important; /* Text color */
+}
+
+.dark .select-me .ant-select-selector{
+    background-color: #122031 !important;
+    color: white !important;
+}
+.dark .select-me .ant-select-arrow{
+    color: white !important;
+}
+
+.dark .ant-input-prefix{
+    color: white !important;
+}
+.dark .ant-input-number-prefix{
+    color: white !important;
+}
+.dark .ant-picker-suffix{
+    color: white !important;
+}
+.dark .ant-picker-separator{
+    color: white !important;
 }
 
 .max-lines-1 {

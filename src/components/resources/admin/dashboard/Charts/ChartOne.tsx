@@ -1,20 +1,33 @@
-"use client";
 import { ApexOptions } from "apexcharts";
-import React from "react";
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Radio, RadioChangeEvent } from "antd";
+import { getChartOne } from "@/api/dashboard";
 import ReactApexChart from "react-apexcharts";
-import DefaultSelectOption from "@/components/SelectOption/DefaultSelectOption";
+import { Languages, TRANSLATIONS } from "@/translations";
+const lang = window.localStorage.getItem("lang") || Languages.EN;
 
 const ChartOne: React.FC = () => {
-  const series = [
-    {
-      name: "Received Amount",
-      data: [0, 20, 35, 45, 35, 55, 65, 50, 65, 75, 60, 75],
-    },
-    {
-      name: "Due Amount",
-      data: [15, 9, 17, 32, 25, 68, 80, 68, 84, 94, 74, 62],
-    },
-  ];
+  // fetch
+  const [sort, setSort] = useState<"month" | "year">("month");
+  const handleChange = ({ target: { value } }: RadioChangeEvent) => {
+    setSort(value);
+  };
+
+  const { data, isLoading, isError } = useQuery<any>({
+    queryKey: ["getChartOne", sort],
+    queryFn: () => getChartOne(sort || "month"),
+  });
+
+  if (isLoading) {
+    return <div>loading...</div>;
+  }
+
+  if (isError) {
+    return <div>Something went wrong!</div>;
+  }
+  // End fetch
+  const series = data.series;
 
   const options: ApexOptions = {
     legend: {
@@ -98,20 +111,7 @@ const ChartOne: React.FC = () => {
     },
     xaxis: {
       type: "category",
-      categories: [
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-      ],
+      categories: data.categories,
       axisBorder: {
         show: false,
       },
@@ -127,20 +127,47 @@ const ChartOne: React.FC = () => {
       },
     },
   };
-
+  // end fetch
+  console.log(data);
   return (
     <div className="col-span-12 rounded-[10px] bg-white px-7.5 pb-6 pt-7.5 shadow-1 dark:bg-gray-dark dark:shadow-card xl:col-span-7">
       <div className="mb-3.5 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h4 className="text-body-2xlg font-bold text-dark dark:text-white">
-            Payments Overview
+          <h4 className="text-body-2xlg text-dark dark:text-white">
+            {lang === Languages.KH
+              ? TRANSLATIONS[Languages.KH].sale_overview
+              : TRANSLATIONS[Languages.EN].sale_overview}
           </h4>
         </div>
         <div className="flex items-center gap-2.5">
           <p className="font-medium uppercase text-dark dark:text-dark-6">
-            Short by:
+            {lang === Languages.KH
+              ? TRANSLATIONS[Languages.KH].short_by
+              : TRANSLATIONS[Languages.EN].short_by}
+            :
           </p>
-          <DefaultSelectOption options={["Monthly", "Yearly"]} />
+          <Radio.Group
+            value={sort}
+            onChange={handleChange}
+            defaultValue={"month"}
+          >
+            <Radio.Button
+              value="month"
+              className="dark:bg-gray-dark dark:!text-white"
+            >
+              {lang === Languages.KH
+                ? TRANSLATIONS[Languages.KH].month
+                : TRANSLATIONS[Languages.EN].month}
+            </Radio.Button>
+            <Radio.Button
+              value="year"
+              className="dark:bg-gray-dark dark:!text-white"
+            >
+              {lang === Languages.KH
+                ? TRANSLATIONS[Languages.KH].year
+                : TRANSLATIONS[Languages.EN].year}
+            </Radio.Button>
+          </Radio.Group>
         </div>
       </div>
       <div>
@@ -156,15 +183,23 @@ const ChartOne: React.FC = () => {
 
       <div className="flex flex-col gap-2 text-center xsm:flex-row xsm:gap-0">
         <div className="border-stroke dark:border-dark-3 xsm:w-1/2 xsm:border-r">
-          <p className="font-medium">Received Amount</p>
+          <p className="font-medium">
+            {lang === Languages.KH
+              ? TRANSLATIONS[Languages.KH].highest_amount
+              : TRANSLATIONS[Languages.EN].highest_amount}
+          </p>
           <h4 className="mt-1 text-xl font-bold text-dark dark:text-white">
-            $45,070.00
+            {Math.max(...data.series[0].data)}
           </h4>
         </div>
         <div className="xsm:w-1/2">
-          <p className="font-medium">Due Amount</p>
+          <p className="font-medium">
+            {lang === Languages.KH
+              ? TRANSLATIONS[Languages.KH].lowest_amount
+              : TRANSLATIONS[Languages.EN].lowest_amount}
+          </p>
           <h4 className="mt-1 text-xl font-bold text-dark dark:text-white">
-            $32,400.00
+            {Math.min(...data.series[0].data)}
           </h4>
         </div>
       </div>

@@ -228,7 +228,7 @@ const ZoneComponent = () => {
         <div className="flex flex-col">
           <p className="me-1 text-xs">.</p>
           <Input
-            className="w-[250px] max-[770px]:w-full"
+            className="input-me w-[250px] dark:bg-gray-dark max-[770px]:w-full"
             prefix={<LuSearch />}
             onChange={handleChangeSearch}
             value={search ? search : query}

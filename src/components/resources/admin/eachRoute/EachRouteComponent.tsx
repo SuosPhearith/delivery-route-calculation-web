@@ -5,6 +5,7 @@ import {
   createDrc,
   createNewLocation,
   deleteLocation,
+  deleteSingleLocation,
   getAllCaseNames,
   getAllLocations,
   getAllTrucksByDate,
@@ -20,6 +21,7 @@ import {
   updateCapNewLocation,
   updateLocationPartOfDay,
   updateNewLocation,
+  updateSingleLocation,
 } from "@/api/eachRoute";
 import {
   getAllTruckAssistants,
@@ -41,6 +43,7 @@ import {
   Modal,
   notification,
   Popconfirm,
+  Popover,
   Select,
   Tag,
 } from "antd";
@@ -166,6 +169,18 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
       message.error(error);
     },
   });
+  const { mutateAsync: updateSingleCapMutate } = useMutation({
+    mutationFn: updateSingleLocation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allLocations"] });
+      queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+      openNotification("Update", "Location updated successfully");
+      handleCancelCreate();
+    },
+    onError: (error: any) => {
+      message.error(error);
+    },
+  });
 
   const {
     register: registerCreate,
@@ -179,9 +194,13 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     if (updateLocation && !updateCap) {
       const newData = { ...data, id: id };
       await updateMutate(newData);
-    } else if (updateLocation && updateCap) {
+    } else if (updateLocation && updateCap && !updateSingle) {
       const newData = { ...data, ...inputValues, id: id };
       await updateCapMutate(newData);
+    } else if (updateLocation && updateCap && updateSingle) {
+      alert("update single");
+      const newData = { ...data, ...inputValues, id: id };
+      await updateSingleCapMutate(newData);
     } else {
       const newData = { ...data, ...inputValues, id: id };
       await createMutate(newData);
@@ -200,6 +219,46 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     setCreateModal(true);
   };
   const [updateLocation, setUpdateLocation] = useState(false);
+  const [updateSingle, setUpdateSingle] = useState(false);
+  const handleUpdateSingleLocation = (item: Location) => {
+    setUpdateLocation(true);
+    setCreateModal(true);
+    setUpdateCap(true);
+    setUpdateSingle(true);
+    setUpdateLocation(true);
+    setValueCreate("code", item.code);
+    setValueCreate("zoneId", item.zone.id);
+    setValueCreate("phone", item.phone);
+    setValueCreate("truckSizeId", item.truckSize.id);
+    setValueCreate("partOfDay", item.partOfDay as PartOfDay);
+    setValueCreate("priority", item.priority as Priority);
+    setValueCreate("locationName", item.locationName);
+    setValueCreate("se", item.se);
+    setValueCreate("paymentTerm", item.paymentTerm);
+    setValueCreate("latitude", item.latitude);
+    setValueCreate("longitude", item.longitude);
+    setValueCreate("deliveryDate", item.deliveryDate);
+    setValueCreate("comments", item.comments);
+    setValueCreate("documentType", item.documentType);
+    setValueCreate("documentNumber", item.documentNumber);
+    setValueCreate("documentDate", item.documentDate);
+    setValueCreate("sla", item.sla);
+    setValueCreate("uploaddTime", item.uploaddTime);
+    setValueCreate("homeNo", item.homeNo);
+    setValueCreate("streetNo", item.streetNo);
+    setValueCreate("village", item.village);
+    setValueCreate("sangkat", item.sangkat);
+    setValueCreate("khan", item.khan);
+    setValueCreate("hotSpot", item.hotSpot);
+    setValueCreate("direction", item.direction);
+    setValueCreate("area", item.area);
+    setValueCreate("region", item.region);
+    setValueCreate("division", item.division);
+
+    for (const req of item.Requirement || []) {
+      handleInputChange(req.caseSize.name, req.amount);
+    }
+  };
   const handleUpdateLocation = (item: Location) => {
     setUpdateLocation(true);
     setCreateModal(true);
@@ -235,7 +294,6 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     for (const req of item.Requirement || []) {
       handleInputChange(req.caseSize.name, req.amount);
     }
-    console.log(item);
   };
 
   // locations
@@ -289,13 +347,17 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
   const handleDownload = async () => {
     try {
       // validation
+      console.log(data);
       for (const truck of data || []) {
-        for (const checked of truck.AssignLocationToTruck || []) {
-          if (checked.location.capacity > truck.capacity) {
-            return message.error("please check out of truck");
+        for (const partOfDay in truck.partOfDays) {
+          if (truck.partOfDays[partOfDay]?.total_capacity > truck.capacity) {
+            return message.error(
+              `Please check truck with plate number : ${truck.truck.licensePlate}`,
+            );
           }
         }
       }
+
       // Make a GET request to your backend route to download the file
       const response = await axios.get(
         `${baseUrl}/drc-date/download-excel-file/${id}`,
@@ -338,6 +400,23 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
       message.error(error);
     },
   });
+  const {
+    mutateAsync: deleteSingleLocationMutaion,
+    isPending: isPendingDeleteSingleLocation,
+  } = useMutation({
+    mutationFn: deleteSingleLocation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allLocations"] });
+      queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+      openNotification("Delete", "Location Deleted successfully");
+    },
+    onError: (error: any) => {
+      message.error(error);
+    },
+  });
+  const handleDeleteSingleLocation = async (id: number) => {
+    await deleteSingleLocationMutaion(id);
+  };
   const handleDeleteLocation = async (
     latitude: number,
     longitude: number,
@@ -830,7 +909,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
               <div className="flex flex-col">
                 <Select
                   showSearch
-                  className="w-[135px] max-[770px]:w-full"
+                  className="select-me w-[135px] max-[770px]:w-full"
                   defaultValue=""
                   value={status}
                   optionFilterProp="label"
@@ -859,7 +938,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                 <Select
                   // size="small"
                   showSearch
-                  className="w-[100px] max-[770px]:w-full"
+                  className="select-me w-[100px] max-[770px]:w-full"
                   defaultValue=""
                   value={truckSizeId}
                   optionFilterProp="label"
@@ -874,7 +953,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                 <Select
                   // size="small"
                   showSearch
-                  className="w-[150px] max-[770px]:w-full"
+                  className="select-me w-[150px] max-[770px]:w-full"
                   // style={{ width: 200 }}
                   defaultValue=""
                   value={zoneId}
@@ -890,7 +969,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                 <Select
                   // size="small"
                   showSearch
-                  className="w-[150px] max-[770px]:w-full"
+                  className="select-me w-[150px] max-[770px]:w-full"
                   // style={{ width: 150 }}
                   defaultValue=""
                   value={warehouseId}
@@ -906,7 +985,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                 <Select
                   // size="small"
                   showSearch
-                  className="w-[150px] max-[770px]:w-full"
+                  className="select-me w-[150px] max-[770px]:w-full"
                   // style={{ width: 150 }}
                   defaultValue=""
                   value={truckOwnershipTypeId}
@@ -921,7 +1000,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
               <div className="flex flex-col">
                 <Input
                   allowClear
-                  className="w-[160px] max-[770px]:w-full"
+                  className="input-me w-[160px] dark:bg-gray-dark max-[770px]:w-full"
                   prefix={<LuSearch />}
                   onChange={(e) => setQuery(e.target.value)}
                   value={query}
@@ -989,7 +1068,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
               <div className="flex flex-col ">
                 <Select
                   showSearch
-                  className="w-[135px] max-[770px]:w-full"
+                  className="select-me w-[135px] max-[770px]:w-full"
                   defaultValue=""
                   value={locationPartOfDay}
                   optionFilterProp="label"
@@ -1022,7 +1101,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                 <Select
                   // size="small"
                   showSearch
-                  className="w-[100px] max-[770px]:w-full"
+                  className="select-me w-[100px] max-[770px]:w-full"
                   defaultValue=""
                   value={locationTruckSizeId}
                   optionFilterProp="label"
@@ -1037,7 +1116,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                 <Select
                   // size="small"
                   showSearch
-                  className="w-[150px] max-[770px]:w-full"
+                  className="select-me w-[150px] max-[770px]:w-full"
                   // style={{ width: 200 }}
                   defaultValue=""
                   value={locationZoneId}
@@ -1052,7 +1131,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
               <div className="flex flex-col ">
                 <Select
                   showSearch
-                  className="w-[150px] max-[770px]:w-full"
+                  className="select-me w-[150px] max-[770px]:w-full"
                   defaultValue=""
                   value={locationPriority}
                   optionFilterProp="label"
@@ -1087,7 +1166,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
               </div>
               <div className="flex flex-col">
                 <InputNumber
-                  className="w-[150px] max-[770px]:w-full"
+                  className="input-me w-[150px] dark:bg-gray-dark max-[770px]:w-full"
                   placeholder="< Capacity"
                   prefix={<LuSearch />}
                   value={locationCapacity}
@@ -1097,7 +1176,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
               <div className="flex flex-col">
                 <Input
                   allowClear
-                  className="w-[160px] max-[770px]:w-full"
+                  className="input-me w-[160px] dark:bg-gray-dark max-[770px]:w-full"
                   prefix={<LuSearch />}
                   onChange={(e) => setLocationQuery(e.target.value)}
                   value={locationQuery}
@@ -1124,7 +1203,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
               <div className="flex flex-col ">
                 <Select
                   showSearch
-                  className="w-[160px] max-[770px]:w-full"
+                  className="select-me w-[160px] max-[770px]:w-full"
                   defaultValue="false"
                   value={locationIsAssign}
                   optionFilterProp="label"
@@ -1179,7 +1258,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                 }
                 onClick={() => assignLocationsToTruck(item.id, item)}
                 key={item.id}
-                className="mx-auto mb-2 max-w-sm  cursor-pointer overflow-hidden border-[1px] border-gray-300 bg-white shadow hover:border-primary hover:bg-slate-200 max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[300px] sm:rounded-md"
+                className="mx-auto mb-2 max-w-sm  cursor-pointer overflow-hidden border-[1px] border-gray-300 bg-white shadow hover:border-primary hover:bg-slate-200 dark:bg-gray-dark max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[300px] sm:rounded-md"
               >
                 <div className="">
                   <div className="px-2 py-2 sm:px-3">
@@ -1187,7 +1266,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                       <div className="flex items-center text-sm  leading-6 text-primary">
                         {item.truck.licensePlate}
                       </div>
-                      <div className="text-md ms-1  text-sm  text-black">
+                      <div className="text-md ms-1  text-sm dark:text-white">
                         {item?.truck?.truckSize?.name}
                       </div>
                       <div className="text-md ms-1 text-sm text-green-700">
@@ -1298,7 +1377,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                       </div>
                       <div className=" ms-1 text-sm text-gray-500">
                         <span className="text-xs">Locations:</span>
-                        <span className="ms-1 text-xs text-black">
+                        <span className="ms-1 text-xs dark:text-white">
                           {item.AssignLocationToTruck?.length}
                         </span>
                       </div>
@@ -1340,7 +1419,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
             {dataLocations?.map((item, index) => {
               const previousItem = index > 0 ? dataLocations[index - 1] : null;
               return (
-                <div key={item.id} className="w-full">
+                <div key={item.id} className="w-full dark:bg-gray-dark">
                   {item.partOfDay !== previousItem?.partOfDay ? (
                     <div className="flex w-full items-center justify-between text-xs text-purple-700">
                       <div className="h-[1px] w-[100px] bg-purple-700"></div>
@@ -1354,7 +1433,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                     ""
                   )}
                   <div
-                    className={`mx-auto mb-2 max-w-sm overflow-hidden border-[1px] bg-white shadow-md max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[300px] sm:rounded-lg ${
+                    className={`mx-auto mb-2 max-w-sm overflow-hidden border-[1px] bg-white shadow-md dark:bg-gray-dark max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[300px] sm:rounded-lg ${
                       item.priority === "CRITICAL"
                         ? "border-red-500"
                         : item.priority === "HIGH"
@@ -1376,7 +1455,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                             >
                               {item.zone.code}
                             </span>
-                            <span className="text-md ms-1 text-black">
+                            <span className="text-md ms-k">
                               ({item?.truckSize.name})
                             </span>
                             <span className="text-md ms-1 text-green-700">
@@ -1452,15 +1531,9 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                         </div>
                         <div className="mt-2 flex items-center justify-between">
                           <div className="flex w-[110px] items-center text-xs text-gray-500">
-                            <div className=" text-black">{item.partOfDay}</div>
-                            {/* <CiEdit
-                              onClick={() =>
-                                handleUpdatePartOfDay(item.partOfDay, item.id)
-                              }
-                              size={15}
-                              color="blue"
-                              className="cursor-pointer"
-                            /> */}
+                            <div className="dark:text-white">
+                              {item.partOfDay}
+                            </div>
                           </div>
                           <div className="w-[30px] text-xs text-gray-500">
                             <span
@@ -1480,36 +1553,121 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                             </span>
                           </div>
                           <div className="w-[100px] text-end text-xs text-gray-500">
-                            <span className=" text-black">{item.phone}</span>
+                            <span className=" dark:text-white">
+                              {item.phone}
+                            </span>
                           </div>
-                          <CiEdit
+                          <Popover
+                            content={
+                              <div className="flex justify-end">
+                                <Button
+                                  onClick={() => handleUpdateLocation(item)}
+                                  size="small"
+                                  className="mx-1"
+                                >
+                                  Split also
+                                </Button>
+                                <Button
+                                  onClick={() =>
+                                    handleUpdateSingleLocation(item)
+                                  }
+                                  size="small"
+                                  className="mx-1"
+                                >
+                                  Single
+                                </Button>
+                              </div>
+                            }
+                            title="Update location"
+                            trigger="hover"
+                          >
+                            <CiEdit
+                              size={20}
+                              color="blue"
+                              className="me-1 cursor-pointer"
+                            />
+                          </Popover>
+                          {/* <CiEdit
                             onClick={() => handleUpdateLocation(item)}
                             size={20}
                             color="blue"
                             className="me-1 cursor-pointer"
-                          />
-                          <Popconfirm
-                            placement="rightTop"
-                            title="Delete location"
-                            description="Are you sure?"
-                            onConfirm={() =>
-                              handleDeleteLocation(
-                                item.latitude,
-                                item.longitude,
-                                item.partOfDay,
-                                item.priority,
-                                item.deliveryRouteCalculationDateId,
-                              )
-                            }
-                            okText="Yes"
-                            cancelText="No"
-                          >
-                            <FaRegTrashAlt
-                              color="red"
-                              size={15}
-                              className="me-1 cursor-pointer"
-                            />
-                          </Popconfirm>
+                          /> */}
+                          {item.isSplit ? (
+                            <Popover
+                              content={
+                                <div className="flex justify-end">
+                                  <Popconfirm
+                                    placement="rightTop"
+                                    title="Delete location"
+                                    description="Are you sure?"
+                                    onConfirm={() =>
+                                      handleDeleteLocation(
+                                        item.latitude,
+                                        item.longitude,
+                                        item.partOfDay,
+                                        item.priority,
+                                        item.deliveryRouteCalculationDateId,
+                                      )
+                                    }
+                                    okText="Yes"
+                                    cancelText="No"
+                                  >
+                                    <Button
+                                      size="small"
+                                      danger
+                                      className="mx-1"
+                                    >
+                                      Split also
+                                    </Button>
+                                  </Popconfirm>
+                                  <Popconfirm
+                                    placement="rightTop"
+                                    title="Delete location"
+                                    description="Are you sure?"
+                                    onConfirm={() =>
+                                      handleDeleteSingleLocation(item.id)
+                                    }
+                                    okText="Yes"
+                                    cancelText="No"
+                                  >
+                                    <Button
+                                      size="small"
+                                      danger
+                                      className="mx-1"
+                                    >
+                                      Single
+                                    </Button>
+                                  </Popconfirm>
+                                </div>
+                              }
+                              title="Delete location"
+                              trigger="click"
+                            >
+                              <FaRegTrashAlt
+                                color="red"
+                                size={15}
+                                className="me-1 cursor-pointer"
+                              />
+                            </Popover>
+                          ) : (
+                            <Popconfirm
+                              placement="rightTop"
+                              title="Delete location"
+                              description="Are you sure?"
+                              onConfirm={() =>
+                                handleDeleteSingleLocation(item.id)
+                              }
+                              okText="Yes"
+                              cancelText="No"
+                            >
+                              <FaRegTrashAlt
+                                color="red"
+                                size={15}
+                                className="me-1 cursor-pointer"
+                              />
+                            </Popconfirm>
+                          )}
 
                           <FaRegEye
                             color="blue"
@@ -1531,7 +1689,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                 <div
                   key={item.id}
                   onClick={() => setCenter({ lat: item.lat, long: item.long })}
-                  className="me-1 flex min-w-fit cursor-pointer items-center justify-center rounded-md border-[1px] bg-gray-50 p-1 px-2 text-sm text-black hover:bg-slate-200"
+                  className="me-1 flex min-w-fit cursor-pointer items-center justify-center rounded-md border-[1px] bg-gray-50 p-1 px-2 text-sm text-black hover:bg-slate-200 dark:bg-gray-dark dark:text-white"
                 >
                   {item.name}
                 </div>

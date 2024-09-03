@@ -219,7 +219,7 @@ const EachDirectionComponent: React.FC<DirectionProps> = ({ id }) => {
             </div>
             <div>
               <Input
-                className="h-full w-[250px] max-[770px]:w-full"
+                className="input-me h-full w-[250px] dark:bg-gray-dark max-[770px]:w-full"
                 prefix={<LuSearch />}
                 onChange={handleSearchChange}
                 value={searchQuery}
@@ -235,12 +235,12 @@ const EachDirectionComponent: React.FC<DirectionProps> = ({ id }) => {
             {filteredData?.map((item, index) => (
               <div
                 key={item.route}
-                className="mx-auto mb-2 max-w-sm overflow-hidden bg-white shadow max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[200px] sm:rounded-md"
+                className="mx-auto mb-2 max-w-sm overflow-hidden bg-white shadow dark:bg-gray-dark max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[200px] sm:rounded-md"
               >
                 <div className="">
                   <div className="px-2 py-2 sm:px-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="flex items-center text-lg font-medium leading-6 text-gray-900">
+                      <h3 className="flex items-center text-lg font-medium leading-6 text-gray-900 dark:text-white">
                         <span className="me-1">
                           <MdAltRoute size={20} />
                         </span>{" "}

@@ -1,22 +1,36 @@
+"use client";
+import { getChartTWo } from "@/api/dashboard";
+import { Languages, TRANSLATIONS } from "@/translations";
+import { useQuery } from "@tanstack/react-query";
 import { ApexOptions } from "apexcharts";
-import React from "react";
+import React, { useState } from "react";
 import ReactApexChart from "react-apexcharts";
-import DefaultSelectOption from "@/components/SelectOption/DefaultSelectOption";
+const lang = window.localStorage.getItem("lang") || Languages.EN;
 
 const ChartTwo: React.FC = () => {
+  // fetch
+  const { data, isLoading, isError } = useQuery<any>({
+    queryKey: ["getChartTwo"],
+    queryFn: () => getChartTWo(),
+  });
+
+  if (isLoading) {
+    return <div>loading...</div>;
+  }
+
+  if (isError) {
+    return <div>Something went wrong!</div>;
+  }
+  // End fetch
   const series = [
     {
       name: "Sales",
-      data: [44, 55, 41, 67, 22, 43, 65],
-    },
-    {
-      name: "Revenue",
-      data: [13, 23, 20, 8, 13, 27, 15],
+      data: data.totalAmounts,
     },
   ];
 
   const options: ApexOptions = {
-    colors: ["#5750F1", "#0ABEF9"],
+    colors: ["#5750F1"],
     chart: {
       fontFamily: "Satoshi, sans-serif",
       type: "bar",
@@ -71,7 +85,7 @@ const ChartTwo: React.FC = () => {
     },
 
     xaxis: {
-      categories: ["M", "T", "W", "T", "F", "S", "S"],
+      categories: data.days,
     },
     legend: {
       position: "top",
@@ -97,12 +111,11 @@ const ChartTwo: React.FC = () => {
     <div className="col-span-12 rounded-[10px] bg-white px-7.5 pt-7.5 shadow-1 dark:bg-gray-dark dark:shadow-card">
       <div className="mb-4 justify-between gap-4 sm:flex">
         <div>
-          <h4 className="text-body-2xlg font-bold text-dark dark:text-white">
-            Profit this week
+          <h4 className="text-body-2xlg text-dark dark:text-white">
+            {lang === Languages.KH
+              ? TRANSLATIONS[Languages.KH].sale_this_month
+              : TRANSLATIONS[Languages.EN].sale_this_month}
           </h4>
-        </div>
-        <div>
-          <DefaultSelectOption options={["This Week", "Last Week"]} />
         </div>
       </div>
 

@@ -188,7 +188,10 @@ const RouteComponent = () => {
       <div className=" md:flex md:items-center md:justify-end">
         <div className="flex flex-col">
           <p className="me-1 text-xs">.</p>
-          <DatePicker onChange={handleChangeSearch} />
+          <DatePicker
+            onChange={handleChangeSearch}
+            className="custom-datepicker input-me dark:bg-gray-dark"
+          />
         </div>
       </div>
       {isLoading ? (

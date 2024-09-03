@@ -7,6 +7,8 @@ import { getDashboard } from "@/api/dashboard";
 import { FaArrowDownLong, FaArrowUpLong } from "react-icons/fa6";
 import { BsBox } from "react-icons/bs";
 import { PiPercent } from "react-icons/pi";
+import { Languages, TRANSLATIONS } from "@/translations";
+const lang = window.localStorage.getItem("lang") || Languages.EN;
 
 const DataStatsOne: React.FC = () => {
   const { RangePicker } = DatePicker;
@@ -28,7 +30,10 @@ const DataStatsOne: React.FC = () => {
         {
           icon: <PiPercent size={20} color="white" />,
           color: "#3FD97F",
-          title: "Total Sale",
+          title:
+            lang === Languages.KH
+              ? TRANSLATIONS[Languages.KH].total_sale
+              : TRANSLATIONS[Languages.EN].total_sale,
           value: data.totalAmount.amount,
           growthRate: parseFloat(data.totalAmount.growthRate).toFixed(2),
         },
@@ -44,6 +49,13 @@ const DataStatsOne: React.FC = () => {
     }
   }, [data]);
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+  if (isError) {
+    return <div>Something went wrong!</div>;
+  }
+
   // Handle date range change
   const selectDateChange = (date: any[] | null) => {
     setRangDate(date);
@@ -52,8 +64,11 @@ const DataStatsOne: React.FC = () => {
   return (
     <>
       <div className="mb-3 flex w-full items-center justify-between">
-        <RangePicker onChange={(e) => selectDateChange(e || null)} />
-        <Button icon={<CiExport size={20} color="blue" />} type="primary" />
+        <RangePicker
+          onChange={(e) => selectDateChange(e || null)}
+          className=" input-me dark:bg-gray-dark"
+        />
+        {/* <Button icon={<CiExport size={20} color="blue" />} type="primary" /> */}
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
         {dataStatsList.map((item, index) => (
@@ -63,7 +78,7 @@ const DataStatsOne: React.FC = () => {
           >
             <div className="flex items-center justify-between">
               <div className="mb-1.5 flex items-center text-heading-6 font-bold text-dark dark:text-white">
-                <span className="text-black">{item.value}</span>
+                <span>{item.value}</span>
                 <span className="ms-1">
                   <BsBox size={18} />
                 </span>
