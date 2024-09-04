@@ -151,14 +151,6 @@ const menuGroups = [
             : TRANSLATIONS[Languages.EN].warehouse,
         route: "/admin/warehouse",
       },
-      {
-        icon: <BsGear size={20} />,
-        label:
-          lang === Languages.KH
-            ? TRANSLATIONS[Languages.KH].system
-            : TRANSLATIONS[Languages.EN].system,
-        route: "/admin/system",
-      },
     ],
   },
 ];

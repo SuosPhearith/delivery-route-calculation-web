@@ -7,6 +7,7 @@ export interface Size {
   containerWidth: number;
   containerHeight: number;
   containerCubic?: number;
+  default?: boolean;
   _count?: TotalTrucks;
 }
 
@@ -31,9 +32,9 @@ export const getAllSize = async (
       "GET",
       `/truck-size?page=${page}&limit=${limit}`,
     );
+    console.log(res);
     return res;
   } catch (error) {
-    console.log(error);
     throw new Error("Failed to fetch containers");
   }
 };
@@ -50,6 +51,18 @@ export const createSize = async (data: Size) => {
 export const deleteSize = async (id: number) => {
   try {
     const res = await apiRequest("DELETE", `/truck-size/${id}`);
+    return res;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const defaultSize = async (id: number) => {
+  try {
+    const res = await apiRequest(
+      "PATCH",
+      `/truck-size/${id}/set-default-truck`,
+    );
     return res;
   } catch (error) {
     throw error;

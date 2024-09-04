@@ -4,13 +4,14 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { LuArrowLeft, LuArrowRight, LuPlusCircle } from "react-icons/lu";
-import { message, Modal, notification, Popconfirm } from "antd";
+import { message, Modal, notification, Popconfirm, Switch } from "antd";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { FaRegTrashCan } from "react-icons/fa6";
 import { FaRegEdit } from "react-icons/fa";
 import Skeleton from "../../components/Skeleton";
 import {
   createSize,
+  defaultSize,
   deleteSize,
   getAllSize,
   ResponseAll,
@@ -149,6 +150,21 @@ const SizeComponent = () => {
     await deleteMutate(id);
   };
   // end delete
+  // default
+  const { mutateAsync: defaultMutate, isPending: isPendingDefault } =
+    useMutation({
+      mutationFn: defaultSize,
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["sizes"] });
+      },
+      onError: (error: any) => {
+        message.error(error);
+      },
+    });
+  const handleDefault = async (id: number) => {
+    await defaultMutate(id);
+  };
+  // end default
 
   //fectch
   const { data, isLoading, isError } = useQuery<ResponseAll>({
@@ -252,6 +268,12 @@ const SizeComponent = () => {
                         scope="col"
                         className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
                       >
+                        Default
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-sm font-normal text-gray-500 dark:text-gray-400 rtl:text-right"
+                      >
                         Total Truck
                       </th>
                       <th
@@ -296,6 +318,15 @@ const SizeComponent = () => {
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
                           <h4 className="text-black dark:text-gray-200">
                             {item.containerCubic} m³
+                          </h4>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <h4 className="text-black dark:text-gray-200">
+                            <Switch
+                              size="small"
+                              checked={item.default}
+                              onClick={() => handleDefault(item.id || 0)}
+                            />
                           </h4>
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
