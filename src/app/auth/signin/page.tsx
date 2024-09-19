@@ -34,8 +34,13 @@ const SignIn = () => {
       );
       window.localStorage.setItem("name", responseData.name);
       window.localStorage.setItem("email", responseData.email);
-      if (responseData.role === Roles.ADMIN) {
+      if (
+        responseData.role === Roles.ADMIN ||
+        responseData.role === Roles.MANAGER
+      ) {
         route.push("/admin");
+      } else {
+        route.push("/admin/information");
       }
     } catch (error: any) {
       message.error(error?.response?.data?.message || "Something went wrong");
@@ -45,7 +50,6 @@ const SignIn = () => {
   };
 
   const {
-    register,
     handleSubmit,
     control,
     formState: { errors },

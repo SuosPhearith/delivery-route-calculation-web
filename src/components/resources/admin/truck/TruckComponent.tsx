@@ -9,6 +9,7 @@ import {
   Popconfirm,
   Select,
   SelectProps,
+  Switch,
 } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -38,6 +39,7 @@ import {
   ResponseAll,
   Truck,
   updateTruck,
+  updateTruckStatus,
 } from "@/api/truck";
 import { TbUser, TbUsers } from "react-icons/tb";
 import { findAllOfficerControll } from "@/api/zone";
@@ -106,7 +108,7 @@ const TruckComponent = () => {
     useMutation({
       mutationFn: createTruck,
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["zones"] });
+        queryClient.invalidateQueries({ queryKey: ["trucks"] });
         // message.success("Truck created successfully");
         openNotification("Created Truck", "Truck Createdd successfully");
         handleCancel();
@@ -119,7 +121,7 @@ const TruckComponent = () => {
     {
       mutationFn: updateTruck,
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["zones"] });
+        queryClient.invalidateQueries({ queryKey: ["trucks"] });
         // message.success("Truck updated successfully");
         openNotification("Update Truck", "Truck Updated successfully");
         handleCancel();
@@ -198,7 +200,7 @@ const TruckComponent = () => {
     {
       mutationFn: deleteTruck,
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["zones"] });
+        queryClient.invalidateQueries({ queryKey: ["trucks"] });
         // message.success("Truck deleted successfully");
         openNotification("Delete Truck", "Truck Deleted successfully");
       },
@@ -212,10 +214,25 @@ const TruckComponent = () => {
   };
   // end delete
 
+  // update status
+  const { mutateAsync: updateStatus, isPending: isPendingUpdateStatus } =
+    useMutation({
+      mutationFn: updateTruckStatus,
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["trucks"] });
+      },
+      onError: (error: any) => {
+        message.error(error);
+      },
+    });
+  const onChangeStatus = async (id: number) => {
+    await updateStatus(id);
+  };
+
   //fectch
   const { data, isLoading, isError } = useQuery<ResponseAll>({
     queryKey: [
-      "zones",
+      "trucks",
       page,
       limit,
       status,
@@ -409,10 +426,6 @@ const TruckComponent = () => {
               {
                 value: "AVAILABLE",
                 label: "AVAILABLE",
-              },
-              {
-                value: "IN_USE",
-                label: "IN_USE",
               },
               {
                 value: "MAINTENANCE",
@@ -670,11 +683,16 @@ const TruckComponent = () => {
                           </h4>
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
-                          <h4
-                            className={` dark:text-gray-200 ${item.status === "AVAILABLE" ? "text-primary" : item.status === "IN_USE" ? "text-yellow-700" : item.status === "MAINTENANCE" ? "text-red" : ""}`}
+                          {/* <h4
+                            className={` dark:text-gray-200 ${item.status === "AVAILABLE" ? "text-primary" : "text-red"}`}
                           >
                             {item.status}
-                          </h4>
+                          </h4> */}
+                          <Switch
+                            disabled={isPendingUpdateStatus}
+                            checked={item.status === "AVAILABLE"}
+                            onChange={() => onChangeStatus(item.id || 0)}
+                          />
                         </td>
 
                         <td className="whitespace-nowrap px-4 py-3 text-sm">
@@ -703,6 +721,7 @@ const TruckComponent = () => {
                               okText="Yes"
                               cancelText="No"
                               onConfirm={() => handleDelete(item.id || 0)}
+                              disabled={isPendingDelete}
                             >
                               <FaRegTrashCan
                                 size={18}

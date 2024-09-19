@@ -195,13 +195,24 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
       const newData = { ...data, id: id };
       await updateMutate(newData);
     } else if (updateLocation && updateCap && !updateSingle) {
+      // need to validate
+      if (!inputValues || Object.keys(inputValues).length === 0) {
+        return message.error("Please input requirement");
+      }
       const newData = { ...data, ...inputValues, id: id };
       await updateCapMutate(newData);
     } else if (updateLocation && updateCap && updateSingle) {
-      alert("update single");
+      // need to validate
+      if (!inputValues || Object.keys(inputValues).length === 0) {
+        return message.error("Please input requirement");
+      }
       const newData = { ...data, ...inputValues, id: id };
       await updateSingleCapMutate(newData);
     } else {
+      // need to validate
+      if (!inputValues || Object.keys(inputValues).length === 0) {
+        return message.error("Please input requirement");
+      }
       const newData = { ...data, ...inputValues, id: id };
       await createMutate(newData);
     }
@@ -325,7 +336,6 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
 
   const handleRightClick = (event: any, id: string, item: TruckByDate) => {
     event.preventDefault();
-    console.log(item.AssignLocationToTruck);
     setPosition({ x: event.clientX, y: event.clientY });
     setTruckItem({
       ...item.truck,
@@ -347,7 +357,6 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
   const handleDownload = async () => {
     try {
       // validation
-      console.log(data);
       for (const truck of data || []) {
         for (const partOfDay in truck.partOfDays) {
           if (truck.partOfDays[partOfDay]?.total_capacity > truck.capacity) {
@@ -483,6 +492,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
       },
     });
   const onSubmit: SubmitHandler<CreateDrc> = async (data) => {
+    reset();
     await createMutaion({
       file: data.file,
       DeliveryRouteCalculationDateId: id,
@@ -1530,12 +1540,12 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                           )}
                         </div>
                         <div className="mt-2 flex items-center justify-between">
-                          <div className="flex w-[110px] items-center text-xs text-gray-500">
+                          <div className="flex w-[80px] items-center text-xs text-gray-500">
                             <div className="dark:text-white">
                               {item.partOfDay}
                             </div>
                           </div>
-                          <div className="w-[30px] text-xs text-gray-500">
+                          <div className="w-[40px] text-xs text-gray-500">
                             <span
                               className={`${
                                 item.priority === "CRITICAL"
@@ -1557,42 +1567,46 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                               {item.phone}
                             </span>
                           </div>
-                          <Popover
-                            content={
-                              <div className="flex justify-end">
-                                <Button
-                                  onClick={() => handleUpdateLocation(item)}
-                                  size="small"
-                                  className="mx-1"
-                                >
-                                  Split also
-                                </Button>
-                                <Button
-                                  onClick={() =>
-                                    handleUpdateSingleLocation(item)
-                                  }
-                                  size="small"
-                                  className="mx-1"
-                                >
-                                  Single
-                                </Button>
-                              </div>
-                            }
-                            title="Update location"
-                            trigger="hover"
-                          >
+                          {item.isSplit ? (
+                            <Popover
+                              content={
+                                <div className="flex justify-end">
+                                  <Button
+                                    onClick={() => handleUpdateLocation(item)}
+                                    size="small"
+                                    className="mx-1"
+                                  >
+                                    Split also
+                                  </Button>
+                                  <Button
+                                    onClick={() =>
+                                      handleUpdateSingleLocation(item)
+                                    }
+                                    size="small"
+                                    className="mx-1"
+                                  >
+                                    Single
+                                  </Button>
+                                </div>
+                              }
+                              title="Update location"
+                              trigger="hover"
+                            >
+                              <CiEdit
+                                size={20}
+                                color="blue"
+                                className="me-1 cursor-pointer"
+                              />
+                            </Popover>
+                          ) : (
                             <CiEdit
+                              onClick={() => handleUpdateSingleLocation(item)}
                               size={20}
                               color="blue"
                               className="me-1 cursor-pointer"
                             />
-                          </Popover>
-                          {/* <CiEdit
-                            onClick={() => handleUpdateLocation(item)}
-                            size={20}
-                            color="blue"
-                            className="me-1 cursor-pointer"
-                          /> */}
+                          )}
+
                           {item.isSplit ? (
                             <Popover
                               content={

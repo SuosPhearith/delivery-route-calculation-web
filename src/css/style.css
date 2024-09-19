@@ -19,6 +19,10 @@
     background-color: black !important;
 }
 
+.ant-switch {
+    background-color: gray;
+}
+
 .dark .input-me input::placeholder{
     color: #EEF !important;
 }

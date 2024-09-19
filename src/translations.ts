@@ -32,6 +32,7 @@ export const TRANSLATIONS = {
     highest_amount: "Highest Amount",
     lowest_amount: "Lowest Amount",
     sale_this_month: "Sale this month",
+    information: "Information",
   },
   [Languages.KH]: {
     greeting: "សួស្តី",
@@ -60,5 +61,6 @@ export const TRANSLATIONS = {
     highest_amount: "ចំនួនខ្ពស់បំផុត",
     lowest_amount: "ចំនួនទាបបំផុត",
     sale_this_month: "ការលក់ខែនេះ",
+    information: "ព័ត៌មាន",
   },
 };

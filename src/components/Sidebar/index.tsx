@@ -12,6 +12,7 @@ import { LiaWarehouseSolid } from "react-icons/lia";
 import { PiBuildingOffice } from "react-icons/pi";
 import { MdOutlineDirections } from "react-icons/md";
 import { Languages, TRANSLATIONS } from "@/translations";
+import Roles from "@/utils/Roles.enum";
 
 const lang = window.localStorage.getItem("lang") || Languages.EN;
 
@@ -20,7 +21,24 @@ interface SidebarProps {
   setSidebarOpen: (arg: boolean) => void;
 }
 
-const menuGroups = [
+const role = localStorage.getItem("role");
+
+const menuGroupsDriverAssistant = [
+  {
+    menuItems: [
+      {
+        icon: <BsTruck size={20} />,
+        label:
+          lang === Languages.KH
+            ? TRANSLATIONS[Languages.KH].information
+            : TRANSLATIONS[Languages.EN].information,
+        route: "/admin/information",
+      },
+    ],
+  },
+];
+
+const menuGroupsAdminManager = [
   {
     menuItems: [
       {
@@ -93,7 +111,6 @@ const menuGroups = [
           },
         ],
       },
-
       {
         icon: <PiBuildingOffice size={20} />,
         label:
@@ -228,20 +245,35 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
         <div className="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear">
           {/* <!-- Sidebar Menu --> */}
           <nav className="mt-1 px-4 lg:px-1">
-            {menuGroups.map((group, groupIndex) => (
-              <div key={groupIndex}>
-                <ul className="mb-6 flex flex-col gap-1">
-                  {group.menuItems.map((menuItem, menuIndex) => (
-                    <SidebarItem
-                      key={menuIndex}
-                      item={menuItem}
-                      pageName={pageName}
-                      setPageName={setPageName}
-                    />
-                  ))}
-                </ul>
-              </div>
-            ))}
+            {role === Roles.ADMIN || role === Roles.MANAGER
+              ? menuGroupsAdminManager.map((group, groupIndex) => (
+                  <div key={groupIndex}>
+                    <ul className="mb-6 flex flex-col gap-1">
+                      {group.menuItems.map((menuItem, menuIndex) => (
+                        <SidebarItem
+                          key={menuIndex}
+                          item={menuItem}
+                          pageName={pageName}
+                          setPageName={setPageName}
+                        />
+                      ))}
+                    </ul>
+                  </div>
+                ))
+              : menuGroupsDriverAssistant.map((group, groupIndex) => (
+                  <div key={groupIndex}>
+                    <ul className="mb-6 flex flex-col gap-1">
+                      {group.menuItems.map((menuItem, menuIndex) => (
+                        <SidebarItem
+                          key={menuIndex}
+                          item={menuItem}
+                          pageName={pageName}
+                          setPageName={setPageName}
+                        />
+                      ))}
+                    </ul>
+                  </div>
+                ))}
           </nav>
           {/* <!-- Sidebar Menu --> */}
         </div>

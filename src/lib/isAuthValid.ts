@@ -9,7 +9,6 @@ export const isAuthValid = async (): Promise<boolean> => {
     console.log(me);
     return true;
   } catch (error) {
-    // console.log(error);
     return false;
   }
 };

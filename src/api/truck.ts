@@ -203,10 +203,17 @@ export const deleteTruck = async (id: number) => {
     throw error;
   }
 };
+export const updateTruckStatus = async (id: number) => {
+  try {
+    const res = await apiRequest("PATCH", `/truck/${id}/update-status`);
+    return res;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export const updateTruck = async (data: Truck) => {
   try {
-    console.log(data.TruckDriver);
     const res = await apiRequest("PATCH", `/truck/${data.id}`, {
       licensePlate: data.licensePlate,
       functioning: data.functioning,

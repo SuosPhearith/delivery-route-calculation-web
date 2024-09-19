@@ -67,7 +67,6 @@ const RouteComponent = () => {
       },
     });
   const onSubmit: SubmitHandler<DRCDate> = async (data) => {
-    console.log(data.date);
     const date: DRCDate = {
       date: data.date,
     };
