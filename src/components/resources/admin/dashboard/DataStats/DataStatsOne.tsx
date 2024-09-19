@@ -49,9 +49,6 @@ const DataStatsOne: React.FC = () => {
     }
   }, [data]);
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
   if (isError) {
     return <div>Something went wrong!</div>;
   }
@@ -70,44 +67,52 @@ const DataStatsOne: React.FC = () => {
         />
         {/* <Button icon={<CiExport size={20} color="blue" />} type="primary" /> */}
       </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
-        {dataStatsList.map((item, index) => (
-          <div
-            key={index}
-            className="rounded-[10px] bg-white p-3 shadow-1 dark:bg-gray-dark"
-          >
-            <div className="flex items-center justify-between">
-              <div className="mb-1.5 flex items-center text-heading-6 font-bold text-dark dark:text-white">
-                <span>{item.value}</span>
-                <span className="ms-1">
-                  <BsBox size={18} />
+      {isLoading ? (
+        "Loading..."
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
+          {dataStatsList.map((item, index) => (
+            <div
+              key={index}
+              className="rounded-[10px] bg-white p-3 shadow-1 dark:bg-gray-dark"
+            >
+              <div className="flex items-center justify-between">
+                <div className="mb-1.5 flex items-center text-heading-6 font-bold text-dark dark:text-white">
+                  <span>{item.value}</span>
+                  <span className="ms-1">
+                    <BsBox size={18} />
+                  </span>
+                </div>
+                <div
+                  className="flex h-10.5 w-10.5 items-center justify-center rounded-full "
+                  style={{ backgroundColor: item.color }}
+                >
+                  {item.icon}
+                </div>
+              </div>
+
+              <div className="mt-2 flex items-end justify-between">
+                <div>
+                  <span className="text-body-sm font-medium">{item.title}</span>
+                </div>
+
+                <span
+                  className={`flex items-center gap-1.5 text-body-sm font-medium ${
+                    item.growthRate > 0 ? "text-green" : "text-red"
+                  }`}
+                >
+                  {item.growthRate}%
+                  {item.growthRate > 0 ? (
+                    <FaArrowUpLong />
+                  ) : (
+                    <FaArrowDownLong />
+                  )}
                 </span>
               </div>
-              <div
-                className="flex h-10.5 w-10.5 items-center justify-center rounded-full "
-                style={{ backgroundColor: item.color }}
-              >
-                {item.icon}
-              </div>
             </div>
-
-            <div className="mt-2 flex items-end justify-between">
-              <div>
-                <span className="text-body-sm font-medium">{item.title}</span>
-              </div>
-
-              <span
-                className={`flex items-center gap-1.5 text-body-sm font-medium ${
-                  item.growthRate > 0 ? "text-green" : "text-red"
-                }`}
-              >
-                {item.growthRate}%
-                {item.growthRate > 0 ? <FaArrowUpLong /> : <FaArrowDownLong />}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </>
   );
 };
