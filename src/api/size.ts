@@ -32,7 +32,6 @@ export const getAllSize = async (
       "GET",
       `/truck-size?page=${page}&limit=${limit}`,
     );
-    console.log(res);
     return res;
   } catch (error) {
     throw new Error("Failed to fetch containers");

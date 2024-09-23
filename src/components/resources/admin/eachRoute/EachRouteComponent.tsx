@@ -1,6 +1,7 @@
 "use client";
 import {
   assignTruck,
+  autoAssign,
   CreateDrc,
   createDrc,
   createNewLocation,
@@ -54,6 +55,7 @@ import { IoChevronBackCircle } from "react-icons/io5";
 import {
   MdCheckBox,
   MdCheckBoxOutlineBlank,
+  MdOutlineAssignmentReturned,
   MdOutlineCheckBoxOutlineBlank,
 } from "react-icons/md";
 import Skeleton from "../../components/Skeleton";
@@ -113,7 +115,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
       placement: "bottomLeft",
     });
   };
-  // create or update  location rith
+  // create or update  location
   const [createModal, setCreateModal] = useState(false);
   const [updateCap, setUpdateCap] = useState(false);
   // Initialize the state to store values for each input
@@ -137,6 +139,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allLocations"] });
       queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+      queryClient.invalidateQueries({ queryKey: ["getAllZonesRoute"] });
       openNotification("Create", "Location created successfully");
       handleCancelCreate();
     },
@@ -149,6 +152,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allLocations"] });
       queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+      queryClient.invalidateQueries({ queryKey: ["getAllZonesRoute"] });
       openNotification("Update", "Location updated successfully");
       handleCancelCreate();
     },
@@ -162,6 +166,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allLocations"] });
       queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+      queryClient.invalidateQueries({ queryKey: ["getAllZonesRoute"] });
       openNotification("Update", "Location updated successfully");
       handleCancelCreate();
     },
@@ -174,6 +179,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allLocations"] });
       queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+      queryClient.invalidateQueries({ queryKey: ["getAllZonesRoute"] });
       openNotification("Update", "Location updated successfully");
       handleCancelCreate();
     },
@@ -314,9 +320,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
   const [locationTruckSizeId, setLocationTruckSizeId] = useState<string>(""); // Unique name for truckSizeId
   const [locationPartOfDay, setLocationPartOfDay] = useState<string>(""); // Unique name for partOfDay
   const [locationPriority, setLocationPriority] = useState<string>(""); // Unique name for priority
-  const [locationCapacity, setLocationCapacity] = useState<number | undefined>(
-    undefined,
-  ); // Unique name for capacity
+  const [locationCapacity, setLocationCapacity] = useState<number>(); // Unique name for capacity
   const [locationQuery, setLocationQuery] = useState<string>(""); // Unique name for query
   const [locationIsAssign, setLocationIsAssign] = useState<string>("false");
   const [locationTruckByDateId, setLocationTruckByDateId] =
@@ -394,6 +398,25 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     }
   };
 
+  // auto assign
+  const { mutateAsync: autoAssignMutaion, isPending: isPendingAutoAssign } =
+    useMutation({
+      mutationFn: autoAssign,
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["allLocations"] });
+        queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+        queryClient.invalidateQueries({ queryKey: ["getAllZonesRoute"] });
+        openNotification("Assign", "Locations assigned successfully");
+      },
+      onError: (error: any) => {
+        message.error(error);
+      },
+    });
+  const handleAutoAssign = async () => {
+    await autoAssignMutaion(id);
+  };
+  // end auto assign
+
   // delete location
   const {
     mutateAsync: deleteLocationMutaion,
@@ -403,6 +426,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allLocations"] });
       queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+      queryClient.invalidateQueries({ queryKey: ["getAllZonesRoute"] });
       openNotification("Delete", "Location Deleted successfully");
     },
     onError: (error: any) => {
@@ -417,6 +441,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allLocations"] });
       queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+      queryClient.invalidateQueries({ queryKey: ["getAllZonesRoute"] });
       openNotification("Delete", "Location Deleted successfully");
     },
     onError: (error: any) => {
@@ -462,6 +487,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allLocations"] });
       queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+      queryClient.invalidateQueries({ queryKey: ["getAllZonesRoute"] });
       openNotification("Update Drc", "Drc Updated successfully");
       handleCancelPartOfDayModal();
     },
@@ -484,6 +510,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["allLocations"] });
         queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+        queryClient.invalidateQueries({ queryKey: ["getAllZonesRoute"] });
         openNotification("Create", "Created successfully");
         handleCancel();
       },
@@ -627,6 +654,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allLocations"] });
       queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+      queryClient.invalidateQueries({ queryKey: ["getAllZonesRoute"] });
       message.success("Locations Unassigned successfully");
       setAssign([]);
     },
@@ -640,6 +668,8 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["allLocations"] });
         queryClient.invalidateQueries({ queryKey: ["allTrucksByDate"] });
+        queryClient.invalidateQueries({ queryKey: ["getAllZonesRoute"] });
+        queryClient.invalidateQueries({ queryKey: ["getAllZonesRoute"] });
         message.success("Locations Unassigned successfully");
         setAssign([]);
       },
@@ -906,8 +936,8 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
       {contextHolder}
       <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       <div className="px-3 py-2">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between overflow-auto">
+          <div className="mb-2 ">
             <div className="flex items-center gap-x-3">
               <Link href={"/admin/route"}>
                 <IoChevronBackCircle
@@ -932,10 +962,6 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                     {
                       value: "AVAILABLE",
                       label: "AVAILABLE",
-                    },
-                    {
-                      value: "IN_USE",
-                      label: "IN_USE",
                     },
                     {
                       value: "MAINTENANCE",
@@ -1010,7 +1036,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
               <div className="flex flex-col">
                 <Input
                   allowClear
-                  className="input-me w-[160px] dark:bg-gray-dark max-[770px]:w-full"
+                  className="input-me min-w-[160px] dark:bg-gray-dark max-[770px]:w-full"
                   prefix={<LuSearch />}
                   onChange={(e) => setQuery(e.target.value)}
                   value={query}
@@ -1037,7 +1063,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
               <div className="flex flex-col ">
                 <div
                   onClick={showModal}
-                  title="add"
+                  title="Add"
                   className="flex cursor-pointer justify-center rounded-md bg-primary p-1"
                 >
                   <IoMdAddCircleOutline color="white" size={20} />
@@ -1046,10 +1072,19 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
               <div className="flex flex-col ">
                 <div
                   onClick={() => handleDownload()}
-                  title="add"
+                  title="Export"
                   className="flex cursor-pointer justify-center rounded-md bg-primary p-1"
                 >
                   <VscCloudDownload color="white" size={20} />
+                </div>
+              </div>
+              <div className="flex flex-col ">
+                <div
+                  onClick={() => handleAutoAssign()}
+                  title="Auto assign"
+                  className="flex cursor-pointer justify-center rounded-md bg-primary p-1"
+                >
+                  <MdOutlineAssignmentReturned color="white" size={20} />
                 </div>
               </div>
             </div>
@@ -1057,209 +1092,203 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
           <div className="flex gap-x-2"></div>
         </div>
         {/* locations */}
-        <div className="flex w-full items-center justify-between">
-          <div className="flex w-full">
-            <div className="flex w-full flex-wrap items-center justify-between gap-x-3">
-              <div className="ms-[10px] flex flex-col">
-                {link ? (
-                  <GoUnlink
-                    className="cursor-pointer text-primary"
-                    onClick={handleLink}
-                    size={20}
-                  />
-                ) : (
-                  <GoLink
-                    className="cursor-pointer text-primary"
-                    onClick={handleLink}
-                    size={20}
-                  />
-                )}
-              </div>
-              <div className="flex flex-col ">
-                <Select
-                  showSearch
-                  className="select-me w-[135px] max-[770px]:w-full"
-                  defaultValue=""
-                  value={locationPartOfDay}
-                  optionFilterProp="label"
-                  onChange={(value) => setLocationPartOfDay(value)}
-                  options={[
-                    {
-                      value: "",
-                      label: "All Time",
-                    },
-                    {
-                      value: "MORNING",
-                      label: "MORNING",
-                    },
-                    {
-                      value: "AFTERNOON",
-                      label: "AFTERNOON",
-                    },
-                    {
-                      value: "EVENING",
-                      label: "EVENING",
-                    },
-                    {
-                      value: "NIGHT",
-                      label: "NIGHT",
-                    },
-                  ]}
+        <div className="flex items-center justify-between overflow-auto">
+          <div className="flex gap-3 pb-2">
+            <div className="ms-[10px] mt-1 flex flex-col">
+              {link ? (
+                <GoUnlink
+                  className="cursor-pointer text-primary"
+                  onClick={handleLink}
+                  size={20}
                 />
-              </div>
-              <div className="flex flex-col ">
-                <Select
-                  // size="small"
-                  showSearch
-                  className="select-me w-[100px] max-[770px]:w-full"
-                  defaultValue=""
-                  value={locationTruckSizeId}
-                  optionFilterProp="label"
-                  onChange={(value) => changeLocationSize(value)}
-                  options={[
-                    { value: "", label: "All Size" },
-                    ...getAllTruckSizesData,
-                  ]}
+              ) : (
+                <GoLink
+                  className="cursor-pointer text-primary"
+                  onClick={handleLink}
+                  size={20}
                 />
-              </div>
-              <div className="flex flex-col ">
-                <Select
-                  // size="small"
-                  showSearch
-                  className="select-me w-[150px] max-[770px]:w-full"
-                  // style={{ width: 200 }}
-                  defaultValue=""
-                  value={locationZoneId}
-                  optionFilterProp="label"
-                  onChange={(value) => changeLocationZone(value)}
-                  options={[
-                    { value: "", label: "All Zone" },
-                    ...getAllZonesRouteData,
-                  ]}
-                />
-              </div>
-              <div className="flex flex-col ">
-                <Select
-                  showSearch
-                  className="select-me w-[150px] max-[770px]:w-full"
-                  defaultValue=""
-                  value={locationPriority}
-                  optionFilterProp="label"
-                  onChange={(value) => setLocationPriority(value)}
-                  options={[
-                    {
-                      value: "",
-                      label: "All Priority",
-                    },
-                    {
-                      value: "CRITICAL",
-                      label: "CRITICAL",
-                    },
-                    {
-                      value: "HIGH",
-                      label: "HIGH",
-                    },
-                    {
-                      value: "MEDIUM",
-                      label: "MEDIUM",
-                    },
-                    {
-                      value: "LOW",
-                      label: "LOW",
-                    },
-                    {
-                      value: "TRIVIAL",
-                      label: "TRIVIAL",
-                    },
-                  ]}
-                />
-              </div>
-              <div className="flex flex-col">
-                <InputNumber
-                  className="input-me w-[150px] dark:bg-gray-dark max-[770px]:w-full"
-                  placeholder="< Capacity"
-                  prefix={<LuSearch />}
-                  value={locationCapacity}
-                  onChange={(value) => setLocationCapacity(value || 0)}
-                />
-              </div>
-              <div className="flex flex-col">
-                <Input
-                  allowClear
-                  className="input-me w-[160px] dark:bg-gray-dark max-[770px]:w-full"
-                  prefix={<LuSearch />}
-                  onChange={(e) => setLocationQuery(e.target.value)}
-                  value={locationQuery}
-                  placeholder="Search location"
-                />
-              </div>
-              <div className="flex flex-col ">
-                <Popconfirm
-                  placement="rightTop"
-                  title="Remove Locations Filter"
-                  description="Are you sure?"
-                  onConfirm={resetLocationsFilter}
-                  okText="Yes"
-                  cancelText="No"
+              )}
+            </div>
+            <div className="flex flex-col ">
+              <Select
+                showSearch
+                className="select-me w-[135px] max-[770px]:w-full"
+                defaultValue=""
+                value={locationPartOfDay}
+                optionFilterProp="label"
+                onChange={(value) => setLocationPartOfDay(value)}
+                options={[
+                  {
+                    value: "",
+                    label: "All Time",
+                  },
+                  {
+                    value: "MORNING",
+                    label: "MORNING",
+                  },
+                  {
+                    value: "AFTERNOON",
+                    label: "AFTERNOON",
+                  },
+                  {
+                    value: "EVENING",
+                    label: "EVENING",
+                  },
+                  {
+                    value: "NIGHT",
+                    label: "NIGHT",
+                  },
+                ]}
+              />
+            </div>
+            <div className="flex flex-col ">
+              <Select
+                // size="small"
+                showSearch
+                className="select-me w-[100px] max-[770px]:w-full"
+                defaultValue=""
+                value={locationTruckSizeId}
+                optionFilterProp="label"
+                onChange={(value) => changeLocationSize(value)}
+                options={[
+                  { value: "", label: "All Size" },
+                  ...getAllTruckSizesData,
+                ]}
+              />
+            </div>
+            <div className="flex flex-col ">
+              <Select
+                showSearch
+                className="select-me w-[150px] max-[770px]:w-full"
+                defaultValue=""
+                value={locationZoneId}
+                optionFilterProp="label"
+                onChange={(value) => changeLocationZone(value)}
+                options={[
+                  { value: "", label: "All Zone" },
+                  ...getAllZonesRouteData,
+                ]}
+              />
+            </div>
+            <div className="flex flex-col ">
+              <Select
+                showSearch
+                className="select-me w-[150px] max-[770px]:w-full"
+                defaultValue=""
+                value={locationPriority}
+                optionFilterProp="label"
+                onChange={(value) => setLocationPriority(value)}
+                options={[
+                  {
+                    value: "",
+                    label: "All Priority",
+                  },
+                  {
+                    value: "CRITICAL",
+                    label: "CRITICAL",
+                  },
+                  {
+                    value: "HIGH",
+                    label: "HIGH",
+                  },
+                  {
+                    value: "MEDIUM",
+                    label: "MEDIUM",
+                  },
+                  {
+                    value: "LOW",
+                    label: "LOW",
+                  },
+                  {
+                    value: "TRIVIAL",
+                    label: "TRIVIAL",
+                  },
+                ]}
+              />
+            </div>
+            <div className="flex flex-col">
+              <InputNumber
+                className="input-me min-w-[150px] dark:bg-gray-dark max-[770px]:w-full"
+                placeholder="< Capacity"
+                prefix={<LuSearch />}
+                value={locationCapacity}
+                onChange={(value) => setLocationCapacity(value || undefined)}
+              />
+            </div>
+            <div className="flex flex-col">
+              <Input
+                allowClear
+                className="input-me min-w-[160px] dark:bg-gray-dark max-[770px]:w-full"
+                prefix={<LuSearch />}
+                onChange={(e) => setLocationQuery(e.target.value)}
+                value={locationQuery}
+                placeholder="Search location"
+              />
+            </div>
+            <div className="flex flex-col ">
+              <Popconfirm
+                placement="rightTop"
+                title="Remove Locations Filter"
+                description="Are you sure?"
+                onConfirm={resetLocationsFilter}
+                okText="Yes"
+                cancelText="No"
+              >
+                <div
+                  title="Reset location filter"
+                  className="flex cursor-pointer justify-center rounded-md bg-primary p-1"
                 >
-                  <div
-                    title="Reset location filter"
-                    className="flex cursor-pointer justify-center rounded-md bg-primary p-1"
-                  >
-                    <GrPowerReset color="white" size={20} />
-                  </div>
-                </Popconfirm>
-              </div>
-              <div className="flex flex-col ">
-                <Select
-                  showSearch
-                  className="select-me w-[160px] max-[770px]:w-full"
-                  defaultValue="false"
-                  value={locationIsAssign}
-                  optionFilterProp="label"
-                  onChange={(value) => switchAssign(value)}
-                  options={[
-                    {
-                      value: "false",
-                      label: "Unassigned",
-                    },
-                    {
-                      value: "true",
-                      label: "Assigned",
-                    },
-                  ]}
-                />
-              </div>
-              <div className="flex w-[290px] justify-center rounded-md border-[1px] bg-gray-50 p-1 px-2 text-black">
-                Selected Locations: {assign.length}({totalCapacity.toFixed(4)}
-                m³)
-              </div>
-              <div className="flex flex-col ">
-                <Popconfirm
-                  placement="rightTop"
-                  title="Unassign"
-                  description="Are you sure?"
-                  onConfirm={unassignLocationsToTruck}
-                  okText="Yes"
-                  cancelText="No"
+                  <GrPowerReset color="white" size={20} />
+                </div>
+              </Popconfirm>
+            </div>
+            <div className="flex flex-col ">
+              <Select
+                showSearch
+                className="select-me w-[120px] max-[770px]:w-full"
+                defaultValue="false"
+                value={locationIsAssign}
+                optionFilterProp="label"
+                onChange={(value) => switchAssign(value)}
+                options={[
+                  {
+                    value: "false",
+                    label: "Unassigned",
+                  },
+                  {
+                    value: "true",
+                    label: "Assigned",
+                  },
+                ]}
+              />
+            </div>
+            <div className="flex min-w-[200px] justify-center rounded-md border-[1px] bg-gray-50 p-1 px-2 text-black">
+              Selected: {assign.length}({totalCapacity.toFixed(4)}
+              m³)
+            </div>
+            <div className="flex flex-col ">
+              <Popconfirm
+                placement="rightTop"
+                title="Unassign"
+                description="Are you sure?"
+                onConfirm={unassignLocationsToTruck}
+                okText="Yes"
+                cancelText="No"
+              >
+                <Button
+                  title="Unassign locations"
+                  className="flex cursor-pointer justify-center rounded-md bg-slate-300 p-1"
+                  disabled={assign.length === 0 || locationIsAssign === "false"}
                 >
-                  <Button
-                    title="Unassign locations"
-                    className="flex cursor-pointer justify-center rounded-md bg-slate-300 p-1"
-                    disabled={
-                      assign.length === 0 || locationIsAssign === "false"
-                    }
-                  >
-                    <GiCancel color="red" size={20} />
-                  </Button>
-                </Popconfirm>
-              </div>
+                  <GiCancel color="red" size={20} />
+                </Button>
+              </Popconfirm>
             </div>
           </div>
         </div>
 
-        <div className="mt-2 flex justify-between max-[700px]:flex-col">
-          <div className="h-[80vh] w-2/6 min-w-[300px] overflow-y-auto p-1 pe-3 max-[700px]:flex max-[700px]:h-fit max-[700px]:w-full max-[700px]:overflow-x-auto max-[700px]:overflow-y-hidden">
+        <div className="mt-2 flex justify-between max-[1000px]:flex-col">
+          <div className="h-[80vh] w-2/6 min-w-[300px] overflow-y-auto p-1 pe-3 max-[1000px]:flex max-[1000px]:h-fit max-[1000px]:w-full max-[1000px]:overflow-x-auto max-[1000px]:overflow-y-hidden">
             <div className="text-md">Trucks: {data?.length}</div>
             {data?.map((item) => (
               <div
@@ -1268,7 +1297,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                 }
                 onClick={() => assignLocationsToTruck(item.id, item)}
                 key={item.id}
-                className="mx-auto mb-2 max-w-sm  cursor-pointer overflow-hidden border-[1px] border-gray-300 bg-white shadow hover:border-primary hover:bg-slate-200 dark:bg-gray-dark max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[300px] sm:rounded-md"
+                className="mx-auto mb-2 max-w-sm  cursor-pointer overflow-hidden border-[1px] border-gray-300 bg-white shadow hover:border-primary hover:bg-slate-200 dark:bg-gray-dark max-[1000px]:m-1 max-[1000px]:w-[300px] max-[1000px]:min-w-[300px] sm:rounded-md"
               >
                 <div className="">
                   <div className="px-2 py-2 sm:px-3">
@@ -1279,7 +1308,9 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                       <div className="text-md ms-1  text-sm dark:text-white">
                         {item?.truck?.truckSize?.name}
                       </div>
-                      <div className="text-md ms-1 text-sm text-green-700">
+                      <div
+                        className={`text-md ms-1 text-sm ${item.status === "AVAILABLE" ? "text-green-600" : "text-red-700"}`}
+                      >
                         {item.status}
                       </div>
                     </div>
@@ -1403,7 +1434,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
               </div>
             ))}
           </div>
-          <div className="h-[80vh] w-2/6 min-w-[300px] overflow-y-auto p-1 pe-3 max-[700px]:flex max-[700px]:h-fit max-[700px]:w-full max-[700px]:overflow-x-auto max-[700px]:overflow-y-hidden">
+          <div className="h-[80vh] w-2/6 min-w-[300px] overflow-y-auto p-1 pe-3 max-[1000px]:flex max-[1000px]:h-fit max-[1000px]:w-full max-[1000px]:overflow-x-auto max-[1000px]:overflow-y-hidden">
             <div className="text-md flex items-center justify-between ">
               <div className="flex">
                 <IoMdAddCircleOutline
@@ -1443,7 +1474,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                     ""
                   )}
                   <div
-                    className={`mx-auto mb-2 max-w-sm overflow-hidden border-[1px] bg-white shadow-md dark:bg-gray-dark max-[700px]:m-1 max-[700px]:w-[300px] max-[700px]:min-w-[300px] sm:rounded-lg ${
+                    className={`mx-auto mb-2 max-w-sm overflow-hidden border-[1px] bg-white shadow-md dark:bg-gray-dark max-[1000px]:m-1 max-[1000px]:w-[300px] max-[1000px]:min-w-[300px] sm:rounded-lg ${
                       item.priority === "CRITICAL"
                         ? "border-red-500"
                         : item.priority === "HIGH"
@@ -1697,7 +1728,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
               );
             })}
           </div>
-          <div className="flex w-4/5 flex-col p-[1px] max-[700px]:w-full">
+          <div className="flex w-4/5 flex-col p-[1px] max-[1000px]:w-full">
             <div className="flex w-full overflow-x-auto pb-2">
               {getAllWarehousesRouteData.map((item: any) => (
                 <div
@@ -1709,7 +1740,7 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
                 </div>
               ))}
             </div>
-            <div className="min-h-[75vh] w-full ">
+            <div className="min-h-[75vh] bg-slate-500 max-[1000px]:h-34 max-[1000px]:w-full">
               <MapRoute
                 locations={dataLocations || []}
                 center={center}
@@ -1826,7 +1857,6 @@ const EachRouteComponent: React.FC<DirectionProps> = ({ id }) => {
             </div>
             <div className="h-[1px] w-[40%] bg-slate-400"></div>
           </div>
-          {/* rith */}
           <div className="flex flex-col">
             {[
               { label: "MORNING" },

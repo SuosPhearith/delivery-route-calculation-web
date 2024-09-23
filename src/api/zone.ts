@@ -56,7 +56,6 @@ export const getAllZone = async (
 };
 
 export const createZone = async (data: Zone) => {
-  console.log(data);
   try {
     const { name, description, officerControllId } = data;
     return await apiRequest("POST", "/zone", {

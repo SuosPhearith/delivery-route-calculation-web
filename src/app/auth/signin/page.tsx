@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useForm, SubmitHandler, Controller } from "react-hook-form";
-import { FaInfoCircle } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import saveToken from "@/services/saveToken";
@@ -16,8 +15,28 @@ type Inputs = {
 };
 
 const SignIn = () => {
+  const [token, setToken] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const route = useRouter();
+
+  // Check if the user is already logged in
+  useEffect(() => {
+    const storedToken = window.localStorage.getItem("accessToken");
+    const storedRole = window.localStorage.getItem("role");
+
+    if (storedToken && storedRole) {
+      setToken(storedToken);
+      setRole(storedRole);
+
+      // Redirect based on the user's role
+      if (storedRole === Roles.ADMIN || storedRole === Roles.MANAGER) {
+        route.push("/admin");
+      } else {
+        route.push("/admin/information");
+      }
+    }
+  }, [route]);
 
   const signIn = async (data: { email: string; password: string }) => {
     try {
@@ -32,8 +51,18 @@ const SignIn = () => {
         responseData.refresh_token,
         responseData.role,
       );
+
+      // Save tokens and role to localStorage
       window.localStorage.setItem("name", responseData.name);
       window.localStorage.setItem("email", responseData.email);
+      window.localStorage.setItem("role", responseData.role);
+      window.localStorage.setItem("accessToken", responseData.access_token);
+
+      // Immediately update token and role state
+      setToken(responseData.access_token);
+      setRole(responseData.role);
+
+      // Redirect based on role after login
       if (
         responseData.role === Roles.ADMIN ||
         responseData.role === Roles.MANAGER
@@ -58,6 +87,11 @@ const SignIn = () => {
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     await signIn({ ...data });
   };
+
+  // If token and role are present, show a placeholder or redirect user
+  if (token && role) {
+    return <div>Redirecting...</div>; // Optionally add a loading spinner or redirect manually
+  }
 
   return (
     <section className="flex min-h-screen items-center justify-center bg-gray-50">

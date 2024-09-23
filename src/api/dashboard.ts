@@ -48,7 +48,6 @@ export const getChartThree = async (sort: "year" | "month"): Promise<any> => {
       "GET",
       `/dashboard/get-chart-three?sort=${sort}`,
     );
-    console.log(res);
     return res;
   } catch (error) {
     throw new Error("Failed to fetch cases");

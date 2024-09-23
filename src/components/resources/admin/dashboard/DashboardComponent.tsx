@@ -20,19 +20,19 @@ const ChartSix = dynamic(() => import("./Charts/ChartSix"), {
 const DashboardComponent: React.FC = () => {
   return (
     <>
-      <Suspense fallback={<div>Loading</div>}>
-        <DataStatsOne />
-      </Suspense>
+      <DataStatsOne />
+      {/* <Suspense fallback={<div>Loading</div>}>
+      </Suspense> */}
       <div className="mt-7 grid grid-cols-12 gap-4 md:gap-6 2xl:gap-7.5">
-        <Suspense fallback={<div>Loading</div>}>
-          <ChartOne />
-        </Suspense>
+        <ChartOne />
+        {/* <Suspense fallback={<div>Loading</div>}>
+        </Suspense> */}
         <Suspense fallback={<div>Loading</div>}>
           <ChartThree />
         </Suspense>
-        <Suspense fallback={<div>Loading</div>}>
-          <ChartTwo />
-        </Suspense>
+        <ChartTwo />
+        {/* <Suspense fallback={<div>Loading</div>}>
+        </Suspense> */}
         <Suspense fallback={<div>Loading</div>}>
           <ChartSix />
         </Suspense>

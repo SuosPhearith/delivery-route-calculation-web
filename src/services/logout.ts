@@ -4,12 +4,13 @@ const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const logoutAPI = async () => {
   try {
-    await axios.post(`${baseUrl}//keycloak/auth/logout`, {
-      token: getRefreshToken,
+    await axios.post(`${baseUrl}/keycloak/auth/logout`, {
+      token: getRefreshToken(),
     });
-    window.location.href = "/auth/signin";
     clearToken();
+    window.location.href = "/auth/signin";
   } catch (error) {
+    clearToken();
     window.location.href = "/auth/signin";
   }
 };

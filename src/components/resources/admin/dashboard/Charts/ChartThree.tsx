@@ -6,17 +6,23 @@ import { Radio, RadioChangeEvent } from "antd";
 import { ChartItem, getChartThree } from "@/api/dashboard";
 import { useQuery } from "@tanstack/react-query";
 import { Languages, TRANSLATIONS } from "@/translations";
+// import dynamic from "next/dynamic";
+// const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 const lang = window.localStorage.getItem("lang") || Languages.EN;
 
 const ChartThree: React.FC = () => {
   const [sort, setSort] = useState<"month" | "year">("month");
+
+  // Handle sort change between "month" and "year"
   const handleChange = ({ target: { value } }: RadioChangeEvent) => {
     setSort(value);
   };
 
+  // Fetch chart data from the backend
   const { data, isLoading, isError } = useQuery<ChartItem[]>({
     queryKey: ["getChartThree", sort],
     queryFn: () => getChartThree(sort || "month"),
+    refetchOnWindowFocus: false,
   });
 
   if (isLoading) {
@@ -27,19 +33,130 @@ const ChartThree: React.FC = () => {
     return <div>Something went wrong!</div>;
   }
 
-  // Ensure `data` is not null or undefined and contains valid items
+  // Predefined color palette with fixed colors (you can modify this palette)
+  const colorPalette = [
+    "#FF5733",
+    "#33FF57",
+    "#3357FF",
+    "#FF33A1",
+    "#FF9633",
+    "#33FFF1",
+    "#FF3333",
+    "#33FFAA",
+    "#AA33FF",
+    "#FFAA33",
+    "#33AAFF",
+    "#FF5733",
+    "#33FF57",
+    "#3357FF",
+    "#FF33A1",
+    "#FF9633",
+    "#33FFF1",
+    "#FF3333",
+    "#33FFAA",
+    "#AA33FF",
+    "#FFAA33",
+    "#33AAFF",
+    "#FF5733",
+    "#33FF57",
+    "#3357FF",
+    "#FF33A1",
+    "#FF9633",
+    "#33FFF1",
+    "#FF3333",
+    "#33FFAA",
+    "#AA33FF",
+    "#FFAA33",
+    "#33AAFF",
+    "#FF5733",
+    "#33FF57",
+    "#3357FF",
+    "#FF33A1",
+    "#FF9633",
+    "#33FFF1",
+    "#FF3333",
+    "#33FFAA",
+    "#AA33FF",
+    "#FFAA33",
+    "#33AAFF",
+    "#FF5733",
+    "#33FF57",
+    "#3357FF",
+    "#FF33A1",
+    "#FF9633",
+    "#33FFF1",
+    "#FF3333",
+    "#33FFAA",
+    "#AA33FF",
+    "#FFAA33",
+    "#33AAFF",
+    "#FF5733",
+    "#33FF57",
+    "#3357FF",
+    "#FF33A1",
+    "#FF9633",
+    "#33FFF1",
+    "#FF3333",
+    "#33FFAA",
+    "#AA33FF",
+    "#FFAA33",
+    "#33AAFF",
+    "#FF5733",
+    "#33FF57",
+    "#3357FF",
+    "#FF33A1",
+    "#FF9633",
+    "#33FFF1",
+    "#FF3333",
+    "#33FFAA",
+    "#AA33FF",
+    "#FFAA33",
+    "#33AAFF",
+    "#FF5733",
+    "#33FF57",
+    "#3357FF",
+    "#FF33A1",
+    "#FF9633",
+    "#33FFF1",
+    "#FF3333",
+    "#33FFAA",
+    "#AA33FF",
+    "#FFAA33",
+    "#33AAFF",
+    "#FF5733",
+    "#33FF57",
+    "#3357FF",
+    "#FF33A1",
+    "#FF9633",
+    "#33FFF1",
+    "#FF3333",
+    "#33FFAA",
+    "#AA33FF",
+    "#FFAA33",
+  ];
+
+  // Function to get the necessary number of colors from the fixed palette
+  const generateColors = (numColors: number) => {
+    return colorPalette.slice(0, numColors);
+  };
+
+  // Generate the colors based on the number of data series
+  const colors = generateColors(Array.isArray(data) ? data.length : 1);
+
+  // Ensure valid data exists
   const validData = Array.isArray(data) ? data.filter((item) => item) : [];
 
+  // Map the series and labels for the chart
   const series = validData?.map((item) => item.amount || 0);
-  const colors = validData?.map((item) => item.color || "#000");
   const labels = validData?.map((item) => item.name || "");
 
+  // Define ApexCharts options
   const options: ApexOptions = {
     chart: {
       fontFamily: "Satoshi, sans-serif",
       type: "donut",
     },
-    colors: colors,
+    colors: colors, // Use the colors from the predefined palette
     labels: labels,
     legend: {
       show: false,
@@ -138,12 +255,12 @@ const ChartThree: React.FC = () => {
 
       <div className="mx-auto w-full max-w-[350px]">
         <div className="-mx-7.5 flex flex-wrap items-center justify-center gap-y-2.5">
-          {data?.map((item) => (
+          {data?.map((item, index) => (
             <div className="w-full px-7.5 sm:w-1/2" key={item.caseSizeId}>
               <div className="flex w-full items-center">
                 <span
                   className="mr-2 block h-3 w-full max-w-3 rounded-full"
-                  style={{ backgroundColor: item.color }}
+                  style={{ backgroundColor: colors[index] }} // Apply frontend colors
                 ></span>
                 <p className="flex w-full justify-between text-body-sm font-medium text-dark dark:text-dark-6">
                   <span> {item.name} </span>

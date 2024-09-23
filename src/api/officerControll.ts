@@ -41,7 +41,6 @@ export const getAllOfficerControll = async (
 };
 
 export const createOfficerControll = async (data: OfficerControll) => {
-  console.log(data);
   try {
     const { description } = data;
     return await apiRequest("POST", "/officer-controll", {

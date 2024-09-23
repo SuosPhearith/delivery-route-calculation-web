@@ -59,15 +59,16 @@ const MapRoute: FC<MapProps> = ({
               display: flex;
               justify-content: center;
               align-items: center;
+              border: 1px solid black;
               background-color: ${
                 isMarkerClicked(location.id)
                   ? "blue"
                   : location.priority === "CRITICAL"
-                    ? "red"
+                    ? "#7d0707"
                     : location.priority === "HIGH"
-                      ? "orange"
+                      ? "#cf5a17"
                       : location.priority === "MEDIUM"
-                        ? "yellow"
+                        ? "#bd8b28"
                         : location.priority === "LOW"
                           ? "lime"
                           : "gray"

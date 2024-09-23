@@ -6,7 +6,6 @@ export const isAuthValid = async (): Promise<boolean> => {
     const me = await axios.get(`${baseUrl}/auth/me`, {
       withCredentials: true,
     });
-    console.log(me);
     return true;
   } catch (error) {
     return false;

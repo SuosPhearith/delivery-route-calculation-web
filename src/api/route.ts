@@ -42,7 +42,6 @@ export const getAllDRCDate = async (
 };
 
 export const createDRCDate = async (data: DRCDate) => {
-  console.log(data);
   try {
     const { date } = data;
     return await apiRequest("POST", "/drc-date", {

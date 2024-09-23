@@ -1,18 +1,10 @@
-import dynamic from "next/dynamic";
+import DashboardComponent from "@/components/resources/admin/dashboard/DashboardComponent";
 import React, { Suspense } from "react";
-
-// Dynamically import Map component with no SSR
-const DashboardComponent = dynamic(
-  () => import("../../components/resources/admin/dashboard/DashboardComponent"),
-  {
-    ssr: false, // This disables server-side rendering for the component
-  },
-);
 
 const Page = () => {
   return (
     <main>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={"Pending..."}>
         <DashboardComponent />
       </Suspense>
     </main>

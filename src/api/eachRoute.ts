@@ -267,8 +267,6 @@ export const createDrc = async (data: CreateDrc) => {
   try {
     const { file, DeliveryRouteCalculationDateId } = data;
 
-    console.log(file);
-
     // Create FormData object and append data
     const formData = new FormData();
     formData.append("file", file[0]);
@@ -291,6 +289,19 @@ export interface DeleteLocation {
   partOfDay: string;
   priority: string;
 }
+
+export const autoAssign = async (id: number) => {
+  try {
+    // Make API request with FormData
+    const response = await apiRequest(
+      "POST",
+      `/drc-date/auto-assign-locations-truck/route/${id}`,
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export const deleteLocation = async (data: DeleteLocation) => {
   try {
