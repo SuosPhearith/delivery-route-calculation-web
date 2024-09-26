@@ -31,8 +31,6 @@ const ChartOne: React.FC = () => {
   }
 
   if (isError) {
-    console.log(isError);
-    alert("error");
     return <div>Something went wrong!</div>;
   }
 

@@ -17,26 +17,26 @@ type Inputs = {
 const SignIn = () => {
   const [token, setToken] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
-  const [isPending, setIsPending] = useState(false);
   const route = useRouter();
+  const [isPending, setIsPending] = useState(false);
 
   // Check if the user is already logged in
-  useEffect(() => {
-    const storedToken = window.localStorage.getItem("accessToken");
-    const storedRole = window.localStorage.getItem("role");
+  // useEffect(() => {
+  //   const storedToken = window.localStorage.getItem("accessToken");
+  //   const storedRole = window.localStorage.getItem("role");
 
-    if (storedToken && storedRole) {
-      setToken(storedToken);
-      setRole(storedRole);
+  //   if (storedToken && storedRole) {
+  //     setToken(storedToken);
+  //     setRole(storedRole);
 
-      // Redirect based on the user's role
-      if (storedRole === Roles.ADMIN || storedRole === Roles.MANAGER) {
-        route.push("/admin");
-      } else {
-        route.push("/admin/information");
-      }
-    }
-  }, [route]);
+  //     // Redirect based on the user's role
+  //     if (storedRole === Roles.ADMIN || storedRole === Roles.MANAGER) {
+  //       route.push("/admin");
+  //     } else {
+  //       route.push("/admin/information");
+  //     }
+  //   }
+  // }, [route]);
 
   const signIn = async (data: { email: string; password: string }) => {
     try {
@@ -67,9 +67,11 @@ const SignIn = () => {
         responseData.role === Roles.ADMIN ||
         responseData.role === Roles.MANAGER
       ) {
-        route.push("/admin");
+        window.location.href = "/admin";
+        // route.push("/admin");
       } else {
-        route.push("/admin/information");
+        window.location.href = "/admin/information";
+        // route.push("/admin/information");
       }
     } catch (error: any) {
       message.error(error?.response?.data?.message || "Something went wrong");
@@ -89,9 +91,9 @@ const SignIn = () => {
   };
 
   // If token and role are present, show a placeholder or redirect user
-  if (token && role) {
-    return <div>Redirecting...</div>; // Optionally add a loading spinner or redirect manually
-  }
+  // if (token && role) {
+  //   return <div>Redirecting...</div>;
+  // }
 
   return (
     <section className="flex min-h-screen items-center justify-center bg-gray-50">
